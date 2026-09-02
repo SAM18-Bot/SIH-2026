@@ -40,7 +40,7 @@ def main():
     
     print("\nCleaning graph (retaining strongly connected component)...")
     # Ensure graph is a single strongly connected component to avoid routing errors later
-    G = ox.utils_graph.get_largest_component(G, strongly=True)
+    G = ox.truncate.largest_component(G, strongly=True)
     
     # Calculate stats
     num_nodes = len(G.nodes)
