@@ -122,7 +122,29 @@
                             <button 
                                 onClick={handleCreateShipment}
                                 className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow transition">
-                                + New Shipment Request (Sevoke → Gangtok)
+                                + New Medical Shipment (Sevoke → Gangtok)
+                            </button>
+                            
+                            <button 
+                                onClick={() => {
+                                    const payload = {
+                                        origin_lat: 26.8797,
+                                        origin_lon: 88.4708,
+                                        dest_lat: 27.3290,
+                                        dest_lon: 88.6122,
+                                        cargo_type: "Construction",
+                                        priority: "NORMAL",
+                                        departure_window_start: new Date().toISOString(),
+                                        departure_window_end: new Date(Date.now() + 8*3600*1000).toISOString()
+                                    };
+                                    fetch('http://127.0.0.1:8000/api/shipments/', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify(payload)
+                                    }).then(() => fetchShipments());
+                                }}
+                                className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded shadow transition">
+                                + New Construction Shipment (Sevoke → Gangtok)
                             </button>
                             
                             <button 

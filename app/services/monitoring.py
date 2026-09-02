@@ -24,15 +24,43 @@ async def monitoring_loop(broadcast_callback):
             G = get_graph()
             apply_risk_scores(G, rain_now, rain_future, reports)
             
+            PRIORITY_MAP = {"Medical Supplies": 3, "Food": 2, "Construction": 1, "Agri": 1}
+            shipment_routes = {}
+            node_usage = {}
+            
             for shipment in active_shipments:
                 opts = optimize_route(shipment.origin_lat, shipment.origin_lon, shipment.dest_lat, shipment.dest_lon)
+                shipment_routes[shipment.id] = {"shipment": shipment, "opts": opts}
                 
+                if opts["now"]["max_risk"] < WAIT_THRESHOLD and opts["now"]["route"]:
+                    for n in opts["now"]["route"]:
+                        if n not in node_usage:
+                            node_usage[n] = []
+                        if shipment.id not in node_usage[n]:
+                            node_usage[n].append(shipment.id)
+            
+            delayed_by_arbitration = set()
+            for n, sids in node_usage.items():
+                if len(sids) > 1:
+                    # Conflict! Sort by priority
+                    sids.sort(key=lambda sid: PRIORITY_MAP.get(shipment_routes[sid]["shipment"].cargo_type, 0), reverse=True)
+                    # Everyone but the highest priority gets delayed
+                    for loser in sids[1:]:
+                        delayed_by_arbitration.add(loser)
+            
+            for sid, data in shipment_routes.items():
+                shipment = data["shipment"]
+                opts = data["opts"]
                 old_route = shipment.current_route_json
                 
-                if opts["now"]["max_risk"] < WAIT_THRESHOLD:
+                if sid in delayed_by_arbitration:
+                    shipment.status = "DELAYED"
+                    shipment.current_route_json = json.dumps([])
+                    reason = f"Arbitration: Yielding route to higher-priority cargo."
+                elif opts["now"]["max_risk"] < WAIT_THRESHOLD:
                     shipment.status = "ACTIVE"
                     shipment.current_route_json = json.dumps(opts["now"]["geometry"])
-                    reason = "Conditions clear. Proceed."
+                    reason = f"Clear. {opts['now']['breakdown']}"
                 elif opts["future"]["max_risk"] < WAIT_THRESHOLD:
                     shipment.status = "DELAYED"
                     shipment.current_route_json = json.dumps(opts["future"]["geometry"])

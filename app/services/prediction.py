@@ -53,5 +53,12 @@ def apply_risk_scores(G, current_rain, future_rain, ground_reports=None):
         risk_now = (0.6 * susc) + (0.4 * norm_rain_now)
         risk_future = (0.6 * susc) + (0.4 * norm_rain_future)
         
+        susc_pct_now = ((0.6 * susc) / risk_now * 100) if risk_now > 0 else 0
+        rain_pct_now = ((0.4 * norm_rain_now) / risk_now * 100) if risk_now > 0 else 0
+        susc_pct_future = ((0.6 * susc) / risk_future * 100) if risk_future > 0 else 0
+        rain_pct_future = ((0.4 * norm_rain_future) / risk_future * 100) if risk_future > 0 else 0
+        
         data['risk_now'] = risk_now
         data['risk_future'] = risk_future
+        data['risk_breakdown_now'] = f"{int(rain_pct_now)}% Rainfall, {int(susc_pct_now)}% Terrain"
+        data['risk_breakdown_future'] = f"{int(rain_pct_future)}% Rainfall, {int(susc_pct_future)}% Terrain"
