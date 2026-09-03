@@ -12,8 +12,9 @@ class Shipment(Base):
     cargo_type = Column(String) # medicine, food, construction, agri
     priority = Column(String) # HIGH, NORMAL
     departure_window_start = Column(DateTime)
-    departure_window_end = Column(DateTime)
+    departure_window_end = Column(DateTime, nullable=False)
     status = Column(String, default="PENDING") # PENDING, ACTIVE, COMPLETED, DELAYED
+    reason = Column(Text, nullable=True)
     current_route_json = Column(Text, nullable=True)
     recommended_departure_time = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

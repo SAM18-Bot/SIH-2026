@@ -15,6 +15,7 @@ class ShipmentCreate(BaseModel):
 class ShipmentResponse(ShipmentCreate):
     id: int
     status: str
+    reason: Optional[str] = None
     current_route_json: Optional[str] = None
     recommended_departure_time: Optional[datetime] = None
     
