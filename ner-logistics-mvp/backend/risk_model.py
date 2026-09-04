@@ -15,8 +15,9 @@ def get_forecast_rainfall(lat=27.174, lon=88.530):
         hourly = resp.get('hourly', {}).get('precipitation', [0,0,0])
         future_avg = sum(hourly[:3]) / 3.0 if len(hourly) >= 3 else current
         return current, future_avg
-    except:
-        return 0.0, 0.0
+    except Exception as e:
+        print(f"Failed to fetch forecast rainfall: {e}")
+        raise
 
 WEIGHT_SUSCEPTIBILITY = 0.6
 WEIGHT_RAINFALL = 0.4
