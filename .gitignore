@@ -15,3 +15,6 @@ __pycache__/
 
 # Databases
 *.db
+
+# GIS Cache
+ner-logistics-mvp/gis-data/scripts/cache/

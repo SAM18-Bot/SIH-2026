@@ -19,18 +19,42 @@ export function useRouteData() {
 
     useEffect(() => {
         fetchShipments();
-        wsRef.current = new WebSocket('ws://127.0.0.1:8000/ws');
+        let reconnectTimer;
         
-        wsRef.current.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.event === 'shipment_updated') {
-                addLog(`Shipment #${data.shipment_id} Update: ${data.reason}`);
-                fetchShipments(); // refresh map
-            }
+        const connect = () => {
+            wsRef.current = new WebSocket('ws://127.0.0.1:8000/ws');
+            
+            wsRef.current.onopen = () => {
+                console.log("WebSocket connected");
+            };
+
+            wsRef.current.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.event === 'shipment_updated') {
+                    addLog(`Shipment #${data.shipment_id} Update: ${data.reason}`);
+                    fetchShipments(); // refresh map
+                }
+            };
+
+            wsRef.current.onclose = () => {
+                console.log("WebSocket disconnected, reconnecting in 3s...");
+                reconnectTimer = setTimeout(connect, 3000);
+            };
+            
+            wsRef.current.onerror = (err) => {
+                console.error("WebSocket error:", err);
+                wsRef.current.close();
+            };
         };
+        
+        connect();
 
         return () => {
-            if (wsRef.current) wsRef.current.close();
+            clearTimeout(reconnectTimer);
+            if (wsRef.current) {
+                wsRef.current.onclose = null; // Prevent reconnect on unmount
+                wsRef.current.close();
+            }
         };
     }, []);
 
