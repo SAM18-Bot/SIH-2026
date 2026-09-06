@@ -18,7 +18,9 @@ class ShipmentResponse(ShipmentCreate):
     reason: Optional[str] = None
     current_route_json: Optional[str] = None
     recommended_departure_time: Optional[datetime] = None
-    
+    risk_breakdown: Optional[str] = None   # e.g. "78% Rainfall, 22% Terrain"
+    confidence: Optional[str] = None       # "low" | "medium" | "high"
+
     class Config:
         from_attributes = True
 

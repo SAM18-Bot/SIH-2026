@@ -68,10 +68,12 @@ async def monitoring_loop(broadcast_callback):
                     winner_cargo = shipment_routes[conflict["winner"]]["shipment"].cargo_type
                     shipment.status = "DELAYED_ARBITRATION"
                     shipment.current_route_json = json.dumps(opts[chosen_time]["geometry"])
-                    
+                    shipment.risk_breakdown = opts[chosen_time]["breakdown"]
+                    shipment.confidence = opts[chosen_time]["confidence"]
+
                     c_node = conflict["conflict_node"]
                     c_lat, c_lon = get_graph().nodes[c_node]['y'], get_graph().nodes[c_node]['x']
-                    
+
                     reason = json.dumps({
                         "msg": f"{winner_cargo} prioritized over {shipment.cargo_type}",
                         "conflict_point": [c_lat, c_lon]
@@ -79,26 +81,34 @@ async def monitoring_loop(broadcast_callback):
                 elif opts["now"]["max_risk"] < WAIT_THRESHOLD:
                     shipment.status = "ACTIVE"
                     shipment.current_route_json = json.dumps(opts["now"]["geometry"])
-                    reason = f"Clear. {opts['now']['breakdown']}"
+                    shipment.risk_breakdown = opts["now"]["breakdown"]
+                    shipment.confidence = opts["now"]["confidence"]
+                    reason = f"Clear. {opts['now']['breakdown']} [confidence: {opts['now']['confidence']}]"
                 elif opts["future"]["max_risk"] < WAIT_THRESHOLD:
                     shipment.status = "DELAYED"
                     shipment.current_route_json = json.dumps(opts["future"]["geometry"])
+                    shipment.risk_breakdown = opts["future"]["breakdown"]
+                    shipment.confidence = opts["future"]["confidence"]
                     reason = f"High risk now ({opts['now']['max_risk']:.2f}). Wait for next window."
                 else:
                     shipment.status = "DELAYED"
                     shipment.current_route_json = json.dumps([])
+                    shipment.risk_breakdown = None
+                    shipment.confidence = "low"
                     reason = "ALL ROUTES UNSAFE. WAIT."
-                
+
                 shipment.reason = reason
-                
+
                 db.commit()
-                
+
                 if old_route != shipment.current_route_json or old_status != shipment.status:
                     await broadcast_callback({
                         "event": "shipment_updated",
                         "shipment_id": shipment.id,
                         "status": shipment.status,
                         "reason": reason,
+                        "risk_breakdown": shipment.risk_breakdown,
+                        "confidence": shipment.confidence,
                         "geometry": json.loads(shipment.current_route_json)
                     })
         except Exception as e:
