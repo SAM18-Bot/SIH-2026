@@ -20,6 +20,10 @@ app.add_middleware(
 app.include_router(shipments_api.router, prefix="/api/shipments", tags=["Shipments"])
 app.include_router(reports_api.router, prefix="/api/reports", tags=["Reports"])
 
+@app.get("/", tags=["Health"])
+def root():
+    return {"status": "ok", "message": "NER Logistics AI API is running"}
+
 clients = []
 
 async def broadcast_ws(message: dict):

@@ -17,6 +17,8 @@ class Shipment(Base):
     reason = Column(Text, nullable=True)
     current_route_json = Column(Text, nullable=True)
     recommended_departure_time = Column(DateTime, nullable=True)
+    risk_breakdown = Column(String, nullable=True)  # e.g. "78% Rainfall, 22% Terrain"
+    confidence = Column(String, nullable=True)      # "low" | "medium" | "high"
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class GroundReport(Base):
