@@ -5,6 +5,13 @@ from backend.domain import Shipment, GroundReport
 from backend.risk_model import apply_risk_scores, get_forecast_rainfall
 from backend.optimizer import get_graph, optimize_route
 import json
+from datetime import datetime
+
+from backend.arbitration import (
+    calculate_priority_score,
+    calculate_wait_pressure,
+    resolve_conflict,
+)
 
 WAIT_THRESHOLD = 0.85
 
@@ -24,37 +31,66 @@ async def monitoring_loop(broadcast_callback):
             G = get_graph()
             apply_risk_scores(G, rain_now, rain_future, reports)
             
-            PRIORITY_MAP = {"Medical Supplies": 30, "Food": 20, "Construction": 10, "Agri": 10}
-            PRIORITY_BONUS = {"HIGH": 5, "NORMAL": 0}
             shipment_routes = {}
-            node_usage = {}
+            current_time = datetime.utcnow()
+            edge_usage = {}
             
             for shipment in active_shipments:
-                opts = optimize_route(shipment.origin_lat, shipment.origin_lon, shipment.dest_lat, shipment.dest_lon)
-                shipment_routes[shipment.id] = {"shipment": shipment, "opts": opts}
+                wait_pressure = calculate_wait_pressure(
+                    shipment.departure_window_end,
+                    current_time
+                )
                 
+                priority_score = calculate_priority_score(
+                    shipment.cargo_type,
+                    shipment.priority,
+                    wait_pressure
+                )
+                
+                opts = optimize_route(shipment.origin_lat, shipment.origin_lon, shipment.dest_lat, shipment.dest_lon)
+                shipment_routes[shipment.id] = {
+                    "shipment": shipment,
+                    "opts": opts,
+                    "priority_score": priority_score,
+                    "wait_pressure": wait_pressure,
+                }
+  
                 chosen_time = "now" if opts["now"]["max_risk"] < WAIT_THRESHOLD else "future"
                 route = opts[chosen_time]["route"]
                 
                 if route and opts[chosen_time]["max_risk"] < WAIT_THRESHOLD:
-                    for n in route:
-                        if n not in node_usage:
-                            node_usage[n] = []
-                        if shipment.id not in node_usage[n]:
-                            node_usage[n].append(shipment.id)
+                    for i in range(len(route) - 1):
+                        edge = (route[i], route[i + 1])
+
+                        if edge not in edge_usage:
+                            edge_usage[edge] = []
+
+                        if shipment.id not in edge_usage[edge]:
+                            edge_usage[edge].append(shipment.id)
             
             delayed_by_arbitration = {}
-            for n, sids in node_usage.items():
+            for n, sids in edge_usage.items():
                 if len(sids) > 1:
-                    # Conflict! Sort by priority
-                    sids.sort(key=lambda sid: (
-                        PRIORITY_MAP.get(shipment_routes[sid]["shipment"].cargo_type, 0) + 
-                        PRIORITY_BONUS.get(shipment_routes[sid]["shipment"].priority, 0)
-                    ), reverse=True)
-                    winner = sids[0]
-                    for loser in sids[1:]:
+                    conflict_shipments = [
+                        {
+                            "shipment_id": sid,
+                            "priority_score": shipment_routes[sid]["priority_score"],
+                        }
+                        for sid in sids
+                    ]
+
+                    decision = resolve_conflict(conflict_shipments)
+
+                    winner = decision["winner"]
+                    for loser_info in decision["losers"]:
+                        loser = loser_info["shipment_id"]
+
                         if loser not in delayed_by_arbitration:
-                            delayed_by_arbitration[loser] = {"winner": winner, "conflict_node": n}
+                            delayed_by_arbitration[loser] = {
+                                "winner": winner,
+                                "conflict_edge": n,
+                                "decision": decision["decision"],
+                            }
             
             for sid, data in shipment_routes.items():
                 shipment = data["shipment"]
@@ -70,14 +106,23 @@ async def monitoring_loop(broadcast_callback):
                     shipment.current_route_json = json.dumps(opts[chosen_time]["geometry"])
                     shipment.risk_breakdown = opts[chosen_time]["breakdown"]
                     shipment.confidence = opts[chosen_time]["confidence"]
-
-                    c_node = conflict["conflict_node"]
-                    c_lat, c_lon = get_graph().nodes[c_node]['y'], get_graph().nodes[c_node]['x']
+                    
+                    c_edge = conflict["conflict_edge"]
+                    c_start, c_end = c_edge
+                    c_lat = get_graph().nodes[c_start]["y"]
+                    c_lon = get_graph().nodes[c_start]["x"]
+                    shipment.arbitration_decision = json.dumps({
+                        "decision": conflict["decision"],
+                        "winner_shipment_id": conflict["winner"],
+                        "loser_shipment_id": shipment.id,
+                        "conflict_point": [c_lat, c_lon],
+                    })
 
                     reason = json.dumps({
                         "msg": f"{winner_cargo} prioritized over {shipment.cargo_type}",
                         "conflict_point": [c_lat, c_lon]
                     })
+                    
                 elif opts["now"]["max_risk"] < WAIT_THRESHOLD:
                     shipment.status = "ACTIVE"
                     shipment.current_route_json = json.dumps(opts["now"]["geometry"])

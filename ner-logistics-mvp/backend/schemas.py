@@ -20,6 +20,7 @@ class ShipmentResponse(ShipmentCreate):
     recommended_departure_time: Optional[datetime] = None
     risk_breakdown: Optional[str] = None   # e.g. "78% Rainfall, 22% Terrain"
     confidence: Optional[str] = None       # "low" | "medium" | "high"
+    arbitration_decision: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -28,3 +29,6 @@ class GroundReportCreate(BaseModel):
     lat: float
     lon: float
     description: str
+
+class RouteRequest(BaseModel):
+    shipment_id: int

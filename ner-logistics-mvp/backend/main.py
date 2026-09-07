@@ -1,7 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
-from backend import shipments_api, reports_api
+from backend import shipments_api, reports_api, routing_api
 from backend.database import engine, Base
 from backend.monitoring_loop import monitoring_loop
 
@@ -19,6 +19,7 @@ app.add_middleware(
 
 app.include_router(shipments_api.router, prefix="/api/shipments", tags=["Shipments"])
 app.include_router(reports_api.router, prefix="/api/reports", tags=["Reports"])
+app.include_router(routing_api.router, prefix="/api/route", tags=["Routing"])
 
 @app.get("/", tags=["Health"])
 def root():

@@ -19,6 +19,7 @@ class Shipment(Base):
     recommended_departure_time = Column(DateTime, nullable=True)
     risk_breakdown = Column(String, nullable=True)  # e.g. "78% Rainfall, 22% Terrain"
     confidence = Column(String, nullable=True)      # "low" | "medium" | "high"
+    arbitration_decision = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class GroundReport(Base):
