@@ -17,17 +17,11 @@ def get_route(request: RouteRequest, db=Depends(get_db)):
             "error": "Shipment not found"
         }
 
-    result = optimize_route(
-        shipment.origin_lat,
-        shipment.origin_lon,
-        shipment.dest_lat,
-        shipment.dest_lon
-    )
-
+    import json
     return {
         "shipment_id": shipment.id,
         "status": shipment.status,
-        "route": result,
+        "route": json.loads(shipment.current_route_json) if shipment.current_route_json else None,
         "arbitration_decision": shipment.arbitration_decision,
         "reason": shipment.reason,
     }
