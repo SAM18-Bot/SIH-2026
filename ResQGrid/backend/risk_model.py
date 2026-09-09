@@ -6,10 +6,35 @@ import numpy as np
 
 CSV_PATH = os.path.join(os.path.dirname(__file__), "..", "gis-data", "data", "historical_landslides.csv")
 
+import json
+
 LAST_RAINFALL = (0.0, 0.0)
+DEMO_MODE = os.environ.get("DEMO_MODE", "false").lower() == "true"
+SCENARIO_TRIGGERED = False
+
+def trigger_demo_scenario():
+    global SCENARIO_TRIGGERED
+    SCENARIO_TRIGGERED = True
+
+def reset_demo_scenario():
+    global SCENARIO_TRIGGERED
+    SCENARIO_TRIGGERED = False
 
 def get_forecast_rainfall(lat=27.174, lon=88.530):
     global LAST_RAINFALL
+    
+    if DEMO_MODE:
+        if SCENARIO_TRIGGERED:
+            scenario_path = os.path.join(os.path.dirname(__file__), "..", "demo_data", "scenario_1.json")
+            if os.path.exists(scenario_path):
+                with open(scenario_path, "r") as f:
+                    data = json.load(f)
+                rain = data.get("trigger", {}).get("rainfall_mm", 120.0)
+                # Cap the normalization roughly, but 120mm will easily hit 1.0 (max risk)
+                return rain, rain
+        # Baseline demo mode before trigger: perfectly clear weather
+        return 0.0, 0.0
+
     url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=precipitation&hourly=precipitation"
     try:
         resp = requests.get(url, timeout=5).json()

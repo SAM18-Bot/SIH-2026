@@ -95,5 +95,19 @@ export function useRouteData() {
         }).catch(err => console.error("Error submitting report:", err));
     };
 
-    return { shipments, logs, createShipment, triggerConflict, submitGroundReport };
+    const triggerDemo = () => {
+        fetch('http://127.0.0.1:8000/api/demo/trigger', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => addLog("Demo Scenario Injected!", data.message))
+            .catch(err => console.error("Error triggering demo:", err));
+    };
+
+    const resetDemo = () => {
+        fetch('http://127.0.0.1:8000/api/demo/reset', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => addLog("Weather Cleared", data.message))
+            .catch(err => console.error("Error resetting demo:", err));
+    };
+
+    return { shipments, logs, createShipment, triggerConflict, submitGroundReport, triggerDemo, resetDemo };
 }
