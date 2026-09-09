@@ -5,7 +5,7 @@ export default function Panels({ shipments, logs, createShipment, triggerConflic
         <div className="w-1/3 bg-white shadow-xl z-10 flex flex-col h-full">
             <div className="p-6 bg-blue-900 text-white">
                 <h1 className="text-2xl font-bold">Dispatcher Terminal</h1>
-                <p className="text-sm opacity-80 mt-1">SIH26002 - NER Logistics Platform</p>
+                <p className="text-sm opacity-80 mt-1">SIH26002 - ResQGrid Platform</p>
             </div>
             
             <div className="p-4 border-b space-y-3 bg-gray-50">

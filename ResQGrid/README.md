@@ -20,13 +20,13 @@ source venv/bin/activate  # (or .\venv\Scripts\activate on Windows)
 pip install -r requirements.txt
 
 # Start the FastApi engine
-cd ner-logistics-mvp
+cd ResQGrid
 uvicorn backend.main:app --port 8000
 ```
 
 ### 2. Frontend (Node.js 18+)
 ```bash
-cd ner-logistics-mvp/frontend
+cd ResQGrid/frontend
 npm install
 npm run dev
 ```

@@ -17,4 +17,4 @@ __pycache__/
 *.db
 
 # GIS Cache
-ner-logistics-mvp/gis-data/scripts/cache/
+ResQGrid/gis-data/scripts/cache/
