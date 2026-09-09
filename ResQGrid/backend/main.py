@@ -28,11 +28,16 @@ def root():
 clients = []
 
 async def broadcast_ws(message: dict):
+    disconnected = []
     for client in clients:
         try:
             await client.send_json(message)
-        except:
-            pass
+        except Exception:
+            disconnected.append(client)
+            
+    for client in disconnected:
+        if client in clients:
+            clients.remove(client)
 
 @app.on_event("startup")
 async def startup_event():

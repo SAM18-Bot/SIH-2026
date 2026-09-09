@@ -5,9 +5,9 @@ export function useRouteData() {
     const [logs, setLogs] = useState([]);
     const wsRef = useRef(null);
 
-    const addLog = (msg) => {
+    const addLog = (title, details = null) => {
         const time = new Date().toLocaleTimeString();
-        setLogs(prev => [`[${time}] ${msg}`, ...prev].slice(0, 50));
+        setLogs(prev => [{ time, title, details }, ...prev].slice(0, 50));
     };
 
     const fetchShipments = () => {
@@ -31,7 +31,7 @@ export function useRouteData() {
             wsRef.current.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 if (data.event === 'shipment_updated') {
-                    addLog(`Shipment #${data.shipment_id} Update: ${data.reason}`);
+                    addLog(`Shipment #${data.shipment_id} updated: ${data.status}`, `Reason: ${data.reason}\nBreakdown: ${data.risk_breakdown || 'N/A'}`);
                     fetchShipments(); // refresh map
                 }
             };
@@ -85,5 +85,15 @@ export function useRouteData() {
         setTimeout(() => createShipment("Construction", "NORMAL"), 500);
     };
 
-    return { shipments, logs, createShipment, triggerConflict };
+    const submitGroundReport = (lat, lon, description) => {
+        fetch('http://127.0.0.1:8000/api/reports/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lat: parseFloat(lat), lon: parseFloat(lon), description })
+        }).then(res => res.json()).then(data => {
+            addLog(`Ground Report #${data.id} submitted`, `${description} at [${lat}, ${lon}]`);
+        }).catch(err => console.error("Error submitting report:", err));
+    };
+
+    return { shipments, logs, createShipment, triggerConflict, submitGroundReport };
 }
