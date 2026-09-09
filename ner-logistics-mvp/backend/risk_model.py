@@ -6,7 +6,10 @@ import numpy as np
 
 CSV_PATH = os.path.join(os.path.dirname(__file__), "..", "gis-data", "data", "historical_landslides.csv")
 
+LAST_RAINFALL = (0.0, 0.0)
+
 def get_forecast_rainfall(lat=27.174, lon=88.530):
+    global LAST_RAINFALL
     url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=precipitation&hourly=precipitation"
     try:
         resp = requests.get(url, timeout=5).json()
@@ -14,11 +17,11 @@ def get_forecast_rainfall(lat=27.174, lon=88.530):
         # simplistic MVP forecasting: just grab first 3 hours average
         hourly = resp.get('hourly', {}).get('precipitation', [0, 0, 0])
         future_avg = sum(hourly[:3]) / 3.0 if len(hourly) >= 3 else current
+        LAST_RAINFALL = (current, future_avg)
         return current, future_avg
     except Exception as e:
-        # Safe fallback — do NOT re-raise or the monitoring loop will drop all shipments
-        print(f"[WARNING] Failed to fetch forecast rainfall: {e}. Using fallback (0.0, 0.0).")
-        return 0.0, 0.0
+        print(f"[WARNING] Failed to fetch forecast rainfall: {e}. Using cached fallback {LAST_RAINFALL}.")
+        return LAST_RAINFALL
 
 WEIGHT_SUSCEPTIBILITY = 0.6
 WEIGHT_RAINFALL = 0.4
