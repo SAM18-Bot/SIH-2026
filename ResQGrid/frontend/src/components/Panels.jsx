@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function Panels({ shipments, logs, createShipment, triggerConflict, submitGroundReport }) {
     const [reportLat, setReportLat] = useState('27.0500');
     const [reportLon, setReportLon] = useState('88.4600');
     const [reportDesc, setReportDesc] = useState('Landslide blocked road');
     const [expandedLogs, setExpandedLogs] = useState({});
+    const [valStats, setValStats] = useState(null);
+
+    useEffect(() => {
+        fetch('http://127.0.0.1:8000/api/validation')
+            .then(res => res.json())
+            .then(data => setValStats(data))
+            .catch(err => console.error('Failed to fetch validation stats:', err));
+    }, []);
 
     const handleReportSubmit = (e) => {
         e.preventDefault();
@@ -22,10 +30,12 @@ export default function Panels({ shipments, logs, createShipment, triggerConflic
                     <h1 className="text-2xl font-bold">Dispatcher Terminal</h1>
                     <p className="text-sm opacity-80 mt-1">SIH26002 - ResQGrid Platform</p>
                 </div>
-                <div className="bg-blue-800 px-3 py-1 rounded border border-blue-700 text-xs text-center">
-                    <span className="block font-bold">Model Validated</span>
-                    <span className="text-green-300">5/7 incidents flagged</span>
-                </div>
+                {valStats && valStats.total > 0 && (
+                    <div className="bg-blue-800 px-3 py-1 rounded border border-blue-700 text-xs text-center">
+                        <span className="block font-bold">Model Validated</span>
+                        <span className="text-green-300">{valStats.hits}/{valStats.total} incidents flagged</span>
+                    </div>
+                )}
             </div>
             
             <div className="p-4 border-b space-y-3 bg-gray-50 flex-shrink-0">
