@@ -78,5 +78,12 @@ def run_backtest():
     print(f"Validation Hit Rate: {hit_rate:.1f}%")
     print(f"Deck Stat: 'We backtested our spatial vulnerability model against the GSI Bhukosh inventory; it successfully pre-flagged {hits} of the {len(ls_df)} known historical landslide coordinates on this corridor as high-risk zones even before rainfall triggers were applied.'")
 
+    # Export to JSON
+    import json
+    out_path = os.path.join(os.path.dirname(__file__), "..", "..", "backend", "validation_result.json")
+    with open(out_path, "w") as f:
+        json.dump({"hits": hits, "total": len(ls_df), "hit_rate": hit_rate}, f)
+    print(f"Exported validation stats to {out_path}")
+
 if __name__ == "__main__":
     run_backtest()

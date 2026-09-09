@@ -25,6 +25,16 @@ app.include_router(routing_api.router, prefix="/api/route", tags=["Routing"])
 def root():
     return {"status": "ok", "message": "ResQGrid AI API is running"}
 
+@app.get("/api/validation", tags=["Validation"])
+def get_validation_stats():
+    import json
+    import os
+    file_path = os.path.join(os.path.dirname(__file__), "validation_result.json")
+    if os.path.exists(file_path):
+        with open(file_path, "r") as f:
+            return json.load(f)
+    return {"hits": 0, "total": 0, "hit_rate": 0.0}
+
 clients = []
 
 async def broadcast_ws(message: dict):
