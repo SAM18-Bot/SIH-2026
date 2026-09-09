@@ -23,7 +23,21 @@ app.include_router(routing_api.router, prefix="/api/route", tags=["Routing"])
 
 @app.get("/", tags=["Health"])
 def root():
-    return {"status": "ok", "message": "ResQGrid AI API is running"}
+    import os
+    demo_mode = os.environ.get("DEMO_MODE", "false").lower() == "true"
+    return {"status": "ok", "message": "ResQGrid AI API is running", "demo_mode": demo_mode}
+
+@app.post("/api/demo/trigger", tags=["Demo"])
+def trigger_demo():
+    from backend.risk_model import trigger_demo_scenario
+    trigger_demo_scenario()
+    return {"status": "triggered", "message": "Rainfall scenario injected!"}
+
+@app.post("/api/demo/reset", tags=["Demo"])
+def reset_demo():
+    from backend.risk_model import reset_demo_scenario
+    reset_demo_scenario()
+    return {"status": "reset", "message": "Weather cleared."}
 
 @app.get("/api/validation", tags=["Validation"])
 def get_validation_stats():

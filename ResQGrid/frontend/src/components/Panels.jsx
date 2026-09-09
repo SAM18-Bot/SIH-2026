@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react';
 
-export default function Panels({ shipments, logs, createShipment, triggerConflict, submitGroundReport }) {
+export default function Panels({ shipments, logs, createShipment, triggerConflict, submitGroundReport, triggerDemo, resetDemo }) {
     const [reportLat, setReportLat] = useState('27.0500');
     const [reportLon, setReportLon] = useState('88.4600');
     const [reportDesc, setReportDesc] = useState('Landslide blocked road');
     const [expandedLogs, setExpandedLogs] = useState({});
     const [valStats, setValStats] = useState(null);
+    const [isDemoMode, setIsDemoMode] = useState(false);
 
     useEffect(() => {
         fetch('http://127.0.0.1:8000/api/validation')
             .then(res => res.json())
             .then(data => setValStats(data))
             .catch(err => console.error('Failed to fetch validation stats:', err));
+            
+        fetch('http://127.0.0.1:8000/')
+            .then(res => res.json())
+            .then(data => setIsDemoMode(data.demo_mode))
+            .catch(err => console.error('Failed to fetch health check:', err));
     }, []);
 
     const handleReportSubmit = (e) => {
@@ -25,7 +31,7 @@ export default function Panels({ shipments, logs, createShipment, triggerConflic
 
     return (
         <div className="w-1/3 bg-white shadow-xl z-10 flex flex-col h-full">
-            <div className="p-6 bg-blue-900 text-white flex justify-between items-center">
+            <div className="p-6 bg-blue-900 text-white flex justify-between items-center relative">
                 <div>
                     <h1 className="text-2xl font-bold">Dispatcher Terminal</h1>
                     <p className="text-sm opacity-80 mt-1">SIH26002 - ResQGrid Platform</p>
@@ -36,19 +42,41 @@ export default function Panels({ shipments, logs, createShipment, triggerConflic
                         <span className="text-green-300">{valStats.hits}/{valStats.total} incidents flagged</span>
                     </div>
                 )}
+                {isDemoMode && (
+                    <div className="absolute top-0 right-0 bg-yellow-500 text-black text-[10px] font-bold px-2 py-1 rounded-bl shadow-sm">
+                        DEMO MODE ACTIVE
+                    </div>
+                )}
             </div>
             
             <div className="p-4 border-b space-y-3 bg-gray-50 flex-shrink-0">
-                <button 
-                    onClick={() => createShipment("Medical Supplies", "HIGH")}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow transition">
-                    + New Medical Shipment
-                </button>
-                <button 
-                    onClick={triggerConflict}
-                    className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow transition">
-                    ⚠️ Trigger Arbitration Conflict
-                </button>
+                <div className="flex space-x-2">
+                    <button 
+                        onClick={() => createShipment("Medical Supplies", "HIGH")}
+                        className="w-1/2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow transition text-sm">
+                        + New Medical Shipment
+                    </button>
+                    <button 
+                        onClick={triggerConflict}
+                        className="w-1/2 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow transition text-sm">
+                        ⚠️ Trigger Arbitration
+                    </button>
+                </div>
+                
+                {isDemoMode && (
+                    <div className="flex space-x-2">
+                        <button 
+                            onClick={triggerDemo}
+                            className="w-1/2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-1 px-4 rounded shadow transition text-xs">
+                            🌧️ Inject Rain Scenario
+                        </button>
+                        <button 
+                            onClick={resetDemo}
+                            className="w-1/2 bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-4 rounded shadow transition text-xs">
+                            ☀️ Clear Weather
+                        </button>
+                    </div>
+                )}
                 
                 <form onSubmit={handleReportSubmit} className="mt-4 p-3 bg-white rounded shadow-sm border border-gray-200">
                     <h4 className="text-sm font-bold text-gray-700 mb-2">Submit Ground Report</h4>
