@@ -7,7 +7,7 @@ from backend.monitoring_loop import monitoring_loop
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="NER Logistics AI")
+app = FastAPI(title="ResQGrid AI")
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,7 +23,7 @@ app.include_router(routing_api.router, prefix="/api/route", tags=["Routing"])
 
 @app.get("/", tags=["Health"])
 def root():
-    return {"status": "ok", "message": "NER Logistics AI API is running"}
+    return {"status": "ok", "message": "ResQGrid AI API is running"}
 
 clients = []
 
