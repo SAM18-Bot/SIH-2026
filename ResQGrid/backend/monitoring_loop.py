@@ -27,9 +27,25 @@ async def monitoring_loop(broadcast_callback):
                 
             rain_now, rain_future = get_forecast_rainfall()
             reports = db.query(GroundReport).filter(GroundReport.active == True).all()
+
+            await broadcast_callback({
+                "event": "ai_log",
+                "log": {
+                    "title": "🧠 [AI Agent] Analyzing spatial risk matrices...",
+                    "details": f"Ingesting weather telemetry. Current rainfall: {rain_now}mm, Future forecast: {rain_future}mm."
+                }
+            })
             
             G = get_graph()
             apply_risk_scores(G, rain_now, rain_future, reports)
+            
+            await broadcast_callback({
+                "event": "ai_log",
+                "log": {
+                    "title": "🌍 [AI Agent] Cross-referencing GSI Bhukosh susceptibility...",
+                    "details": f"Calculated baseline risk scores for {len(G.edges)} edges using cKDTree nearest-neighbor search."
+                }
+            })
             
             shipment_routes = {}
             current_time = datetime.utcnow()
@@ -71,26 +87,34 @@ async def monitoring_loop(broadcast_callback):
             delayed_by_arbitration = {}
             for n, sids in edge_usage.items():
                 if len(sids) > 1:
-                    conflict_shipments = [
-                        {
-                            "shipment_id": sid,
-                            "priority_score": shipment_routes[sid]["priority_score"],
-                        }
-                        for sid in sids
-                    ]
-
-                    decision = resolve_conflict(conflict_shipments)
-
-                    winner = decision["winner"]
-                    for loser_info in decision["losers"]:
-                        loser = loser_info["shipment_id"]
-
-                        if loser not in delayed_by_arbitration:
-                            delayed_by_arbitration[loser] = {
-                                "winner": winner,
-                                "conflict_edge": n,
-                                "decision": decision["decision"],
+                    # Allow shipments of the same priority to caravan together.
+                    # Only halt a shipment if it has STRICTLY LESS priority than the most urgent truck on this edge.
+                    priorities = [shipment_routes[sid]["priority_score"] for sid in sids]
+                    max_prio = max(priorities)
+                    
+                    # Find the winner (first one with max priority)
+                    winner = sids[priorities.index(max_prio)]
+                    
+                    has_losers = False
+                    for sid in sids:
+                        if shipment_routes[sid]["priority_score"] < max_prio:
+                            has_losers = True
+                            if sid not in delayed_by_arbitration:
+                                delayed_by_arbitration[sid] = {
+                                    "winner": winner,
+                                    "conflict_edge": n,
+                                    "decision": f"Yielding to higher priority shipment."
+                                }
+                                
+                    # Only broadcast arbitration log if an actual conflict halted someone
+                    if has_losers:
+                        await broadcast_callback({
+                            "event": "ai_log",
+                            "log": {
+                                "title": f"⚡ [AI Agent] Arbitration Triggered at Edge {n}",
+                                "details": f"Capacity conflict detected between {len(sids)} shipments. Priority Matrix resolved: Shipment {winner} proceeds, lower priorities halted."
                             }
+                        })
             
             for sid, data in shipment_routes.items():
                 shipment = data["shipment"]
@@ -126,6 +150,8 @@ async def monitoring_loop(broadcast_callback):
                 elif opts["now"]["max_risk"] < WAIT_THRESHOLD:
                     shipment.status = "ACTIVE"
                     shipment.current_route_json = json.dumps(opts["now"]["geometry"])
+                    if not shipment.original_route_json:
+                        shipment.original_route_json = shipment.current_route_json
                     shipment.risk_breakdown = opts["now"]["breakdown"]
                     shipment.confidence = opts["now"]["confidence"]
                     reason = f"Clear. {opts['now']['breakdown']} [confidence: {opts['now']['confidence']}]"

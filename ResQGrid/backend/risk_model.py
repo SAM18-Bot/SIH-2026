@@ -23,18 +23,21 @@ def reset_demo_scenario():
 def get_forecast_rainfall(lat=27.174, lon=88.530):
     global LAST_RAINFALL
     
+    # 1. MANUAL OVERRIDE (Works in both live and offline modes)
+    if SCENARIO_TRIGGERED:
+        scenario_path = os.path.join(os.path.dirname(__file__), "..", "demo_data", "scenario_1.json")
+        if os.path.exists(scenario_path):
+            with open(scenario_path, "r") as f:
+                data = json.load(f)
+            rain = data.get("trigger", {}).get("rainfall_mm", 120.0)
+            # Cap the normalization roughly, but 120mm will easily hit 1.0 (max risk)
+            return rain, rain
+
+    # 2. OFFLINE DEMO MODE (Bypasses internet completely for speed/reliability)
     if DEMO_MODE:
-        if SCENARIO_TRIGGERED:
-            scenario_path = os.path.join(os.path.dirname(__file__), "..", "demo_data", "scenario_1.json")
-            if os.path.exists(scenario_path):
-                with open(scenario_path, "r") as f:
-                    data = json.load(f)
-                rain = data.get("trigger", {}).get("rainfall_mm", 120.0)
-                # Cap the normalization roughly, but 120mm will easily hit 1.0 (max risk)
-                return rain, rain
-        # Baseline demo mode before trigger: perfectly clear weather
         return 0.0, 0.0
 
+    # 3. LIVE DATA MODE (Fetches real weather from Open-Meteo)
     url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=precipitation&hourly=precipitation"
     try:
         resp = requests.get(url, timeout=5).json()

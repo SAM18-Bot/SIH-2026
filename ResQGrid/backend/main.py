@@ -23,9 +23,15 @@ app.include_router(routing_api.router, prefix="/api/route", tags=["Routing"])
 
 @app.get("/", tags=["Health"])
 def root():
-    import os
-    demo_mode = os.environ.get("DEMO_MODE", "false").lower() == "true"
-    return {"status": "ok", "message": "ResQGrid AI API is running", "demo_mode": demo_mode}
+    from backend.risk_model import DEMO_MODE
+    return {"status": "ok", "message": "ResQGrid AI API is running", "demo_mode": DEMO_MODE}
+
+@app.post("/api/settings/mode", tags=["Settings"])
+def set_mode(payload: dict):
+    # payload: {"demo_mode": true/false}
+    import backend.risk_model as rm
+    rm.DEMO_MODE = payload.get("demo_mode", False)
+    return {"status": "ok", "demo_mode": rm.DEMO_MODE}
 
 @app.post("/api/demo/trigger", tags=["Demo"])
 def trigger_demo():
@@ -36,8 +42,24 @@ def trigger_demo():
 @app.post("/api/demo/reset", tags=["Demo"])
 def reset_demo():
     from backend.risk_model import reset_demo_scenario
+    from backend.database import SessionLocal
+    from backend.domain import GroundReport, Shipment
+    
+    # 1. Reset the rainfall trigger
     reset_demo_scenario()
-    return {"status": "reset", "message": "Weather cleared."}
+    
+    # 2. Clear all shipments and ground reports so the project starts fresh
+    db = SessionLocal()
+    try:
+        db.query(GroundReport).delete()
+        db.query(Shipment).delete()
+        db.commit()
+    except Exception as e:
+        print(f"Failed to clear DB: {e}")
+    finally:
+        db.close()
+        
+    return {"status": "reset", "message": "Database wiped, weather cleared."}
 
 @app.get("/api/validation", tags=["Validation"])
 def get_validation_stats():

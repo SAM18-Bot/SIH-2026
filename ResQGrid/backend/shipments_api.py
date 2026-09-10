@@ -31,9 +31,9 @@ def get_shipment_risk(shipment_id: int, db: Session = Depends(get_db)):
     Returns a structured risk breakdown for a specific shipment.
 
     Response fields:
-    - risk_score: the max edge risk on the chosen route (0.0 – 1.0)
+    - risk_score: the max edge risk on the chosen route (0.0 - 1.0)
     - risk_breakdown: human-readable contribution split, e.g. "78% Rainfall, 22% Terrain"
-    - confidence: data confidence flag — "low" | "medium" | "high"
+    - confidence: data confidence flag - "low" | "medium" | "high"
       (based on density of historical landslide records near the worst-risk segment)
     - status: current shipment status
     - reason: free-text explanation from the monitoring loop
@@ -50,3 +50,13 @@ def get_shipment_risk(shipment_id: int, db: Session = Depends(get_db)):
         "reason":        shipment.reason,
         "route_geometry": json.loads(shipment.current_route_json) if shipment.current_route_json else [],
     }
+
+@router.post("/{shipment_id}/complete", response_model=dict)
+def complete_shipment(shipment_id: int, db: Session = Depends(get_db)):
+    shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
+    if not shipment:
+        raise HTTPException(status_code=404, detail="Shipment not found")
+    shipment.status = "COMPLETED"
+    shipment.reason = "Reached final destination."
+    db.commit()
+    return {"status": "COMPLETED", "shipment_id": shipment.id}
