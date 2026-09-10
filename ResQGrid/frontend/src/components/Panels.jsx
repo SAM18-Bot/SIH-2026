@@ -63,20 +63,18 @@ export default function Panels({ shipments, logs, createShipment, triggerConflic
                     </button>
                 </div>
                 
-                {isDemoMode && (
-                    <div className="flex space-x-2">
-                        <button 
-                            onClick={triggerDemo}
-                            className="w-1/2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-1 px-4 rounded shadow transition text-xs">
-                            🌧️ Inject Rain Scenario
-                        </button>
-                        <button 
-                            onClick={resetDemo}
-                            className="w-1/2 bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-4 rounded shadow transition text-xs">
-                            ☀️ Clear Weather
-                        </button>
-                    </div>
-                )}
+                <div className="flex space-x-2">
+                    <button 
+                        onClick={triggerDemo}
+                        className="w-1/2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-1 px-4 rounded shadow transition text-xs">
+                        🌧️ Inject Rain Scenario
+                    </button>
+                    <button 
+                        onClick={resetDemo}
+                        className="w-1/2 bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-4 rounded shadow transition text-xs">
+                        ☀️ Clear Weather
+                    </button>
+                </div>
                 
                 <form onSubmit={handleReportSubmit} className="mt-4 p-3 bg-white rounded shadow-sm border border-gray-200">
                     <h4 className="text-sm font-bold text-gray-700 mb-2">Submit Ground Report</h4>
