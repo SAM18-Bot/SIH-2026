@@ -5,7 +5,7 @@ import Panels from './components/Panels';
 import PresenterMode from './components/PresenterMode';
 
 export default function App() {
-  const { shipments, logs, createShipment, triggerConflict, submitGroundReport, triggerDemo, resetDemo, toggleDemoMode, stormActive } = useRouteData();
+  const { shipments, logs, createShipment, triggerConflict, submitGroundReport, triggerDemo, resetDemo, toggleDemoMode, stormActive, completeShipment } = useRouteData();
   const [isPresenterMode, setIsPresenterMode] = useState(false);
 
   return (
@@ -20,7 +20,7 @@ export default function App() {
         resetDemo={resetDemo}
         toggleDemoMode={toggleDemoMode}
       />
-      <MapComponent shipments={shipments} stormActive={stormActive} />
+      <MapComponent shipments={shipments} stormActive={stormActive} completeShipment={completeShipment} />
       
       {/* Presenter Mode Toggle Button */}
       {!isPresenterMode && (

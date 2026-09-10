@@ -150,6 +150,8 @@ async def monitoring_loop(broadcast_callback):
                 elif opts["now"]["max_risk"] < WAIT_THRESHOLD:
                     shipment.status = "ACTIVE"
                     shipment.current_route_json = json.dumps(opts["now"]["geometry"])
+                    if not shipment.original_route_json:
+                        shipment.original_route_json = shipment.current_route_json
                     shipment.risk_breakdown = opts["now"]["breakdown"]
                     shipment.confidence = opts["now"]["confidence"]
                     reason = f"Clear. {opts['now']['breakdown']} [confidence: {opts['now']['confidence']}]"

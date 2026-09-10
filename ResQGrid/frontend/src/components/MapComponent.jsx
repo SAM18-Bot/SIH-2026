@@ -15,19 +15,22 @@ let DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 // Custom Animated Truck Component
-function TruckMarker({ route, isDelayed, info, conflictPoint }) {
+function TruckMarker({ route, isDelayed, info, conflictPoint, onComplete }) {
     const [progress, setProgress] = useState(0);
 
     useEffect(() => {
-        if (isDelayed) return; // Stop moving if delayed
+        if (isDelayed || progress >= 1) return; // Stop moving if delayed or finished
         const interval = setInterval(() => {
             setProgress(p => {
-                if (p >= 1) return 0; // Loop back to start for demo purposes
-                return p + 0.002; // Adjust speed here
+                if (p >= 1) {
+                    onComplete(info.id);
+                    return 1; // Stay at end until removed
+                }
+                return p + 0.005; // Make it a bit faster
             });
         }, 50);
         return () => clearInterval(interval);
-    }, [isDelayed]);
+    }, [isDelayed, info.id, onComplete, progress]);
 
     if (!route || route.length < 2) return null;
 
@@ -91,7 +94,7 @@ function TruckMarker({ route, isDelayed, info, conflictPoint }) {
     );
 }
 
-export default function MapComponent({ shipments, stormActive }) {
+export default function MapComponent({ shipments, stormActive, completeShipment }) {
     // Hardcoded historical GSI Bhukosh high-susceptibility zones along NH-10
     const landslideZones = [
         [27.0500, 88.4600],
@@ -139,11 +142,13 @@ export default function MapComponent({ shipments, stormActive }) {
 
                 {shipments.map(s => {
                     const route = s.current_route_json ? JSON.parse(s.current_route_json) : [];
-                    if(route.length === 0) return null;
+                    if(route.length === 0 || s.status === 'COMPLETED') return null;
                     
                     const isDelayed = s.status.includes('DELAYED');
-                    let color = isDelayed ? '#f97316' : '#3b82f6';
-                    let dashArray = isDelayed ? '10, 10' : null;
+                    const isRerouted = s.original_route_json && s.original_route_json !== s.current_route_json;
+                    
+                    let color = isDelayed ? '#f97316' : (isRerouted ? '#8b5cf6' : '#3b82f6');
+                    let dashArray = isRerouted && !isDelayed ? '5, 5' : (isDelayed ? '10, 10' : null);
                     let opacity = isDelayed ? 0.6 : 0.9;
                     
                     // Extract arbitration info if delayed by arbitration
@@ -172,6 +177,7 @@ export default function MapComponent({ shipments, stormActive }) {
                                 isDelayed={isDelayed} 
                                 info={{ id: s.id, cargo: s.cargo_type, reason: conflictMsg }} 
                                 conflictPoint={conflictPoint}
+                                onComplete={completeShipment}
                             />
 
                             {/* Red flag on the exact conflict edge if arbitration triggered */}

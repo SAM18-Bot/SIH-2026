@@ -43,22 +43,23 @@ def trigger_demo():
 def reset_demo():
     from backend.risk_model import reset_demo_scenario
     from backend.database import SessionLocal
-    from backend.domain import GroundReport
+    from backend.domain import GroundReport, Shipment
     
     # 1. Reset the rainfall trigger
     reset_demo_scenario()
     
-    # 2. Clear all ground reports so the map fully heals
+    # 2. Clear all shipments and ground reports so the project starts fresh
     db = SessionLocal()
     try:
         db.query(GroundReport).delete()
+        db.query(Shipment).delete()
         db.commit()
     except Exception as e:
-        print(f"Failed to clear ground reports: {e}")
+        print(f"Failed to clear DB: {e}")
     finally:
         db.close()
         
-    return {"status": "reset", "message": "Weather cleared and roadblocks removed."}
+    return {"status": "reset", "message": "Database wiped, weather cleared."}
 
 @app.get("/api/validation", tags=["Validation"])
 def get_validation_stats():

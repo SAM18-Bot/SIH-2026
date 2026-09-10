@@ -129,5 +129,15 @@ export function useRouteData() {
         });
     };
 
-    return { shipments, logs, createShipment, triggerConflict, submitGroundReport, triggerDemo, resetDemo, toggleDemoMode, stormActive };
+    const completeShipment = (id) => {
+        fetch(`http://127.0.0.1:8000/api/shipments/${id}/complete`, { method: 'POST' })
+            .then(res => res.json())
+            .then(() => {
+                addLog(`Shipment #${id} Arrived`, "Successfully reached destination.");
+                fetchShipments();
+            })
+            .catch(err => console.error("Error completing shipment:", err));
+    };
+
+    return { shipments, logs, createShipment, triggerConflict, submitGroundReport, triggerDemo, resetDemo, toggleDemoMode, stormActive, completeShipment };
 }
