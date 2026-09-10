@@ -27,9 +27,25 @@ async def monitoring_loop(broadcast_callback):
                 
             rain_now, rain_future = get_forecast_rainfall()
             reports = db.query(GroundReport).filter(GroundReport.active == True).all()
+
+            await broadcast_callback({
+                "event": "ai_log",
+                "log": {
+                    "title": "🧠 [AI Agent] Analyzing spatial risk matrices...",
+                    "details": f"Ingesting weather telemetry. Current rainfall: {rain_now}mm, Future forecast: {rain_future}mm."
+                }
+            })
             
             G = get_graph()
             apply_risk_scores(G, rain_now, rain_future, reports)
+            
+            await broadcast_callback({
+                "event": "ai_log",
+                "log": {
+                    "title": "🌍 [AI Agent] Cross-referencing GSI Bhukosh susceptibility...",
+                    "details": f"Calculated baseline risk scores for {len(G.edges)} edges using cKDTree nearest-neighbor search."
+                }
+            })
             
             shipment_routes = {}
             current_time = datetime.utcnow()
@@ -82,6 +98,15 @@ async def monitoring_loop(broadcast_callback):
                     decision = resolve_conflict(conflict_shipments)
 
                     winner = decision["winner"]
+                    
+                    await broadcast_callback({
+                        "event": "ai_log",
+                        "log": {
+                            "title": f"⚡ [AI Agent] Arbitration Triggered at Edge {n}",
+                            "details": f"Capacity conflict detected between {len(sids)} shipments. Priority Matrix resolved: {winner} proceeds, others halted."
+                        }
+                    })
+                    
                     for loser_info in decision["losers"]:
                         loser = loser_info["shipment_id"]
 

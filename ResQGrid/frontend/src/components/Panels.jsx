@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function Panels({ shipments, logs, createShipment, triggerConflict, submitGroundReport, triggerDemo, resetDemo }) {
+export default function Panels({ shipments, logs, createShipment, triggerConflict, submitGroundReport, triggerDemo, resetDemo, toggleDemoMode }) {
     const [reportLat, setReportLat] = useState('27.0500');
     const [reportLon, setReportLon] = useState('88.4600');
     const [reportDesc, setReportDesc] = useState('Landslide blocked road');
@@ -29,6 +29,12 @@ export default function Panels({ shipments, logs, createShipment, triggerConflic
         setExpandedLogs(prev => ({ ...prev, [idx]: !prev[idx] }));
     };
 
+    const handleModeToggle = () => {
+        const newMode = !isDemoMode;
+        setIsDemoMode(newMode);
+        toggleDemoMode(newMode);
+    };
+
     return (
         <div className="w-1/3 bg-white shadow-xl z-10 flex flex-col h-full">
             <div className="p-6 bg-blue-900 text-white flex justify-between items-center relative">
@@ -44,12 +50,27 @@ export default function Panels({ shipments, logs, createShipment, triggerConflic
                 )}
                 {isDemoMode && (
                     <div className="absolute top-0 right-0 bg-yellow-500 text-black text-[10px] font-bold px-2 py-1 rounded-bl shadow-sm">
-                        DEMO MODE ACTIVE
+                        DEMO MODE (OFFLINE)
                     </div>
                 )}
             </div>
             
             <div className="p-4 border-b space-y-3 bg-gray-50 flex-shrink-0">
+                {/* Mode Toggle UI */}
+                <div className="flex items-center justify-between bg-white p-2 rounded shadow-sm border border-gray-200 mb-2">
+                    <span className="text-xs font-bold text-gray-700">Data Source:</span>
+                    <div className="flex items-center space-x-2">
+                        <span className={`text-xs ${!isDemoMode ? 'text-blue-600 font-bold' : 'text-gray-400'}`}>LIVE (Open-Meteo)</span>
+                        <button 
+                            onClick={handleModeToggle}
+                            className={`w-10 h-5 flex items-center rounded-full p-1 cursor-pointer transition-colors ${isDemoMode ? 'bg-yellow-500' : 'bg-blue-500'}`}
+                        >
+                            <div className={`bg-white w-3 h-3 rounded-full shadow-md transform transition-transform ${isDemoMode ? 'translate-x-5' : ''}`}></div>
+                        </button>
+                        <span className={`text-xs ${isDemoMode ? 'text-yellow-600 font-bold' : 'text-gray-400'}`}>OFFLINE DEMO</span>
+                    </div>
+                </div>
+
                 <div className="flex space-x-2">
                     <button 
                         onClick={() => createShipment("Medical Supplies", "HIGH")}

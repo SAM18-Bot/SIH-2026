@@ -4,7 +4,7 @@ import MapComponent from './components/MapComponent';
 import Panels from './components/Panels';
 
 export default function App() {
-  const { shipments, logs, createShipment, triggerConflict, submitGroundReport, triggerDemo, resetDemo } = useRouteData();
+  const { shipments, logs, createShipment, triggerConflict, submitGroundReport, triggerDemo, resetDemo, toggleDemoMode, stormActive } = useRouteData();
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
@@ -16,8 +16,9 @@ export default function App() {
         submitGroundReport={submitGroundReport}
         triggerDemo={triggerDemo}
         resetDemo={resetDemo}
+        toggleDemoMode={toggleDemoMode}
       />
-      <MapComponent shipments={shipments} />
+      <MapComponent shipments={shipments} stormActive={stormActive} />
     </div>
   );
 }

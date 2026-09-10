@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Polyline, Tooltip, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, Tooltip, Marker, Popup, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -91,7 +91,15 @@ function TruckMarker({ route, isDelayed, info, conflictPoint }) {
     );
 }
 
-export default function MapComponent({ shipments }) {
+export default function MapComponent({ shipments, stormActive }) {
+    // Hardcoded historical GSI Bhukosh high-susceptibility zones along NH-10
+    const landslideZones = [
+        [27.0500, 88.4600],
+        [27.0850, 88.4800],
+        [27.1300, 88.5100],
+        [27.1600, 88.5300]
+    ];
+
     return (
         <div className="w-2/3 h-full relative">
             {/* Live Data Explainer Overlay for Judges */}
@@ -103,6 +111,32 @@ export default function MapComponent({ shipments }) {
             <MapContainer center={[27.1, 88.5]} zoom={11} style={{ height: "100%", width: "100%", zIndex: 0 }}>
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 
+                {/* Historical Landslide Susceptibility Layers */}
+                {landslideZones.map((zone, idx) => (
+                    <Circle 
+                        key={`ls-${idx}`}
+                        center={zone} 
+                        pathOptions={{ color: 'red', fillColor: 'red', fillOpacity: 0.15, weight: 1, dashArray: '4,4' }} 
+                        radius={2500}
+                    >
+                        <Tooltip sticky>GSI Bhukosh: High Landslide Susceptibility Zone</Tooltip>
+                    </Circle>
+                ))}
+
+                {/* Dynamic Storm Layer */}
+                {stormActive && (
+                    <Circle 
+                        center={[27.174, 88.530]} 
+                        pathOptions={{ color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.3, weight: 2 }} 
+                        radius={15000}
+                    >
+                        <Tooltip sticky permanent direction="bottom">
+                            <strong className="text-blue-800 block text-center">🌩️ SEVERE RAINFALL SYSTEM</strong>
+                            <div className="text-xs text-center">Forecast: 120mm/hr<br/>Triggering high-risk terrain segments!</div>
+                        </Tooltip>
+                    </Circle>
+                )}
+
                 {shipments.map(s => {
                     const route = s.current_route_json ? JSON.parse(s.current_route_json) : [];
                     if(route.length === 0) return null;

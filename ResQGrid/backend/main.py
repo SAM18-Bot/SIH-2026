@@ -23,9 +23,15 @@ app.include_router(routing_api.router, prefix="/api/route", tags=["Routing"])
 
 @app.get("/", tags=["Health"])
 def root():
-    import os
-    demo_mode = os.environ.get("DEMO_MODE", "false").lower() == "true"
-    return {"status": "ok", "message": "ResQGrid AI API is running", "demo_mode": demo_mode}
+    from backend.risk_model import DEMO_MODE
+    return {"status": "ok", "message": "ResQGrid AI API is running", "demo_mode": DEMO_MODE}
+
+@app.post("/api/settings/mode", tags=["Settings"])
+def set_mode(payload: dict):
+    # payload: {"demo_mode": true/false}
+    import backend.risk_model as rm
+    rm.DEMO_MODE = payload.get("demo_mode", False)
+    return {"status": "ok", "demo_mode": rm.DEMO_MODE}
 
 @app.post("/api/demo/trigger", tags=["Demo"])
 def trigger_demo():
