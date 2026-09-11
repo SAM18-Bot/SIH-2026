@@ -11,7 +11,7 @@ export function useRouteData() {
     };
 
     const fetchShipments = () => {
-        fetch('http://127.0.0.1:8000/api/shipments/')
+        fetch('https://resqgrid-yx8y.onrender.com/api/shipments/')
             .then(res => res.json())
             .then(data => setShipments(data))
             .catch(err => console.error("Error fetching shipments:", err));
@@ -22,7 +22,7 @@ export function useRouteData() {
         let reconnectTimer;
         
         const connect = () => {
-            wsRef.current = new WebSocket('ws://127.0.0.1:8000/ws');
+            wsRef.current = new WebSocket('wss://resqgrid-yx8y.onrender.com/ws');
             
             wsRef.current.onopen = () => {
                 console.log("WebSocket connected");
@@ -69,7 +69,7 @@ export function useRouteData() {
             departure_window_start: new Date().toISOString(),
             departure_window_end: new Date(Date.now() + 8*3600*1000).toISOString()
         };
-        fetch('http://127.0.0.1:8000/api/shipments/', {
+        fetch('https://resqgrid-yx8y.onrender.com/api/shipments/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -86,7 +86,7 @@ export function useRouteData() {
     };
 
     const submitGroundReport = (lat, lon, description) => {
-        fetch('http://127.0.0.1:8000/api/reports/', {
+        fetch('https://resqgrid-yx8y.onrender.com/api/reports/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ lat: parseFloat(lat), lon: parseFloat(lon), description })
@@ -96,14 +96,14 @@ export function useRouteData() {
     };
 
     const triggerDemo = () => {
-        fetch('http://127.0.0.1:8000/api/demo/trigger', { method: 'POST' })
+        fetch('https://resqgrid-yx8y.onrender.com/api/demo/trigger', { method: 'POST' })
             .then(res => res.json())
             .then(data => addLog("Demo Scenario Injected!", data.message))
             .catch(err => console.error("Error triggering demo:", err));
     };
 
     const resetDemo = () => {
-        fetch('http://127.0.0.1:8000/api/demo/reset', { method: 'POST' })
+        fetch('https://resqgrid-yx8y.onrender.com/api/demo/reset', { method: 'POST' })
             .then(res => res.json())
             .then(data => addLog("Weather Cleared", data.message))
             .catch(err => console.error("Error resetting demo:", err));
@@ -113,7 +113,7 @@ export function useRouteData() {
     const [simulatedRain, setSimulatedRain] = useState(0);
 
     const fetchHazardPoints = () => {
-        fetch('http://127.0.0.1:8000/api/hazard-points')
+        fetch('https://resqgrid-yx8y.onrender.com/api/hazard-points')
             .then(res => res.json())
             .then(data => setHazardPoints(data))
             .catch(err => console.error("Error fetching hazard points:", err));
@@ -122,7 +122,7 @@ export function useRouteData() {
     const [holdingHavens, setHoldingHavens] = useState([]);
 
     const fetchHoldingHavens = () => {
-        fetch('http://127.0.0.1:8000/api/holding-havens')
+        fetch('https://resqgrid-yx8y.onrender.com/api/holding-havens')
             .then(res => res.json())
             .then(data => setHoldingHavens(data))
             .catch(err => console.error("Error fetching holding havens:", err));
@@ -135,7 +135,7 @@ export function useRouteData() {
 
     const setRainfall = (mm) => {
         setSimulatedRain(mm);
-        fetch('http://127.0.0.1:8000/api/simulation/rain', {
+        fetch('https://resqgrid-yx8y.onrender.com/api/simulation/rain', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ rainfall_mm: parseFloat(mm) })
@@ -149,7 +149,7 @@ export function useRouteData() {
     };
 
     const triggerPreset = (presetName) => {
-        fetch('http://127.0.0.1:8000/api/simulation/preset', {
+        fetch('https://resqgrid-yx8y.onrender.com/api/simulation/preset', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ preset: presetName })
@@ -167,7 +167,7 @@ export function useRouteData() {
     };
 
     const divertBypass = (shipmentId) => {
-        fetch(`http://127.0.0.1:8000/api/shipments/${shipmentId}/divert-bypass`, {
+        fetch(`https://resqgrid-yx8y.onrender.com/api/shipments/${shipmentId}/divert-bypass`, {
             method: 'POST'
         })
         .then(res => res.json())
@@ -179,7 +179,7 @@ export function useRouteData() {
     };
 
     const clearShipments = () => {
-        fetch('http://127.0.0.1:8000/api/shipments/clear', { method: 'DELETE' })
+        fetch('https://resqgrid-yx8y.onrender.com/api/shipments/clear', { method: 'DELETE' })
             .then(res => res.json())
             .then(() => {
                 addLog("Cleared all active shipments.");
@@ -190,7 +190,7 @@ export function useRouteData() {
 
     const fetchSitRep = async () => {
         try {
-            const res = await fetch('http://127.0.0.1:8000/api/situation-report');
+            const res = await fetch('https://resqgrid-yx8y.onrender.com/api/situation-report');
             return await res.json();
         } catch (err) {
             console.error("Error fetching SitRep:", err);
