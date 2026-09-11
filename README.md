@@ -1,100 +1,84 @@
-# 🏔️ ResQGrid
+# 🚁 ResQGrid
+**AI-Driven Logistics & Dynamic Routing Platform for Disaster-Prone Regions (SIH 2026)**
 
-> **AI-Based Smart Logistics and Accessibility Intelligence Platform for the North Eastern Region (NER)**  
-> *Developed for Smart India Hackathon (SIH26002)*
+![ResQGrid Banner](https://img.shields.io/badge/Status-Active-success)
+![React](https://img.shields.io/badge/Frontend-React%20%7C%20Vite%20%7C%20Tailwind-blue)
+![FastAPI](https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python-green)
+![Data](https://img.shields.io/badge/Data-OSMnx%20%7C%20GSI%20Bhukosh-orange)
 
-[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/Frontend-React-61DAFB?style=flat-square&logo=react&logoColor=black)](https://reactjs.org/)
-[![NetworkX](https://img.shields.io/badge/Routing-NetworkX-316192?style=flat-square)](https://networkx.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.style=flat-square)](https://opensource.org/licenses/MIT)
-
-The North Eastern Region (NER) of India faces major logistical challenges due to difficult terrain, extreme weather, and frequent road disruptions caused by landslides. **ResQGrid** is an intelligent, real-time logistics platform designed to predict infrastructure disruptions, optimize routing for essential goods, and automatically arbitrate multi-shipment bottlenecks on constrained terrains like single-lane bridges.
+ResQGrid is a predictive, multi-agent logistics platform designed for the North Eastern Region (NER) and other topographically challenging areas. Standard GPS solutions are *reactive* and treat all cargo equally, leading to gridlock during crises. ResQGrid anticipates road network failures *before* they occur using geological data and live weather telemetry, autonomously rerouting fleets and arbitrating road capacity based on mission-critical priorities.
 
 ---
 
-## ✨ Key Features
+## 🌟 Key Features
 
-* **🧠 Predictive Risk Model (XAI)**: Combines live rainfall data (Open-Meteo) with historical terrain susceptibility (GSI Bhukosh) to dynamically predict landslide risks. Fully explainable AI provides exact percentage breakdowns (e.g., *78% Rainfall, 22% Terrain*) and confidence scores.
-* **🚦 Multi-Shipment Arbitration**: Automatically resolves routing conflicts on constrained segments by analyzing cargo priority (e.g., Medicine > Construction) and urgency, rerouting lower-priority shipments.
-* **🗺️ Real-Time Dispatch Terminal**: A Vite/React + Leaflet dashboard providing live WebSocket telemetry, active shipment tracking, and visual arbitration resolution.
-* **🚨 Ground-Truth Reporting**: Live dispatcher inputs allow immediate flagging of blockages, overriding predictions and instantly recalculating active routes.
-* **🛡️ Validated Accuracy**: The spatial vulnerability model was natively backtested against the GSI Bhukosh historical landslide inventory, successfully pre-flagging **71.4% (5/7)** of known historical incidents as high-risk *before* rainfall triggers were even applied.
-
----
-
-## 🏗️ Architecture
-
-* **`backend/`**: FastAPI core engine handling Dijkstra routing (NetworkX), predictive risk scoring (SciPy cKDTree), conflict arbitration, and asynchronous WebSocket loops.
-* **`gis-data/`**: OSMnx graph extraction pipelines and historical backtesting logic validating the risk model against spatial datasets.
-* **`frontend/`**: High-performance Vite + React dashboard visualizing routes, system event logs, dynamic validation badges, and interactive tools.
+*   **Predictive Routing:** Cross-references live rainfall (Open-Meteo API) with historical geological slope vulnerability (GSI Bhukosh data) to predict imminent landslides and reroute trucks *before* roads are blocked.
+*   **Capacity Arbitration Engine:** When alternative routes create narrow bottlenecks, the AI automatically evaluates the priority matrix of the fleet. Critical supplies (Medical, Food) are granted right-of-way, while non-essential cargo (Construction) is ordered to yield.
+*   **Tactical Dark-Mode Command Center:** A highly interactive React/Leaflet dashboard featuring live WebSocket truck tracking, 3D Elevation Profiles, NDMA Situation Reports (SitRep), and Arbitration explainability matrices.
+*   **Integrated Presenter Mode:** A built-in UI overlay that allows seamless, step-by-step interactive demonstrations of the AI's capabilities for hackathons and pitches.
 
 ---
 
-## 🚀 Getting Started
+## 🛠️ Tech Stack & Architecture
 
-### Prerequisites
-* Python 3.10+
-* Node.js 18+
+### Geospatial & Risk AI (Data Module)
+*   **Tech:** Python, SciPy (`cKDTree`), Pandas
+*   **Why:** We use `cKDTree` for spatial queries ($O(\log N)$ nearest-neighbor mathematical efficiency) to rapidly map thousands of GPS coordinates against historical landslide polygons in real-time, bypassing the latency of traditional SQL spatial queries.
+
+### Routing & Arbitration Engine (Core Backend)
+*   **Tech:** OSMnx, NetworkX
+*   **Why:** Standard mapping APIs are "black boxes". Using `NetworkX`, we built a custom mathematical graph of NER corridors where edge weights dynamically mutate based on the formula: `(0.6 * Terrain Susceptibility) + (0.4 * Live Rainfall)`.
+
+### Real-Time Systems (API & Persistence)
+*   **Tech:** FastAPI, SQLite, SQLAlchemy, WebSockets
+*   **Why:** FastAPI's asynchronous architecture handles hundreds of concurrent WebSocket connections streaming live truck telemetry. SQLite provides a lightweight, zero-config persistence layer ideal for edge servers in remote disaster zones.
+
+### Command Center (Frontend)
+*   **Tech:** React, Vite, Tailwind CSS, React-Leaflet
+*   **Why:** React enables instantaneous DOM updates for the live dashboard. React-Leaflet allows us to render native GeoJSON hazard layers and animated mathematical shapes (storm cells) directly over raw OpenStreetMap tiles.
+
+---
+
+## 🚀 How is it different from existing solutions?
+
+| Feature | Standard GPS (Google Maps) | ResQGrid |
+| :--- | :--- | :--- |
+| **Approach** | **Reactive:** Routes around traffic only *after* a jam or landslide is reported. | **Predictive:** Reroutes based on 120mm/hr rainfall thresholds against known slope vulnerability. |
+| **Fleet Awareness** | **Single-Agent:** Ignores the rest of the fleet, causing bottleneck gridlocks. | **Multi-Agent:** Actively performs Capacity Arbitration on narrow bypasses. |
+| **Cargo Priority** | **First-come, first-served:** Treats cement exactly like life-saving blood. | **Mission-Critical Priority:** Stalls low-priority trucks to let emergency supplies pass. |
+
+---
+
+## ⚙️ Local Setup & Installation
 
 ### 1. Backend Setup
-
 ```bash
-# Clone the repository
-git clone https://github.com/SAM18-Bot/SIH-2026.git
-cd SIH-2026
-
-# Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: .\venv\Scripts\activate
-
-# Install dependencies
-pip install -r ResQGrid/requirements.txt
-
-# Start the FastAPI engine
 cd ResQGrid
+python -m venv venv
+venv\Scripts\activate      # Windows
+# source venv/bin/activate # Mac/Linux
+
+pip install -r requirements.txt
 uvicorn backend.main:app --port 8000
 ```
 
 ### 2. Frontend Setup
-
-Open a new terminal window:
-
 ```bash
-cd SIH-2026/ResQGrid/frontend
+cd ResQGrid/frontend
 npm install
 npm run dev
 ```
 
-The Dispatcher Terminal will be available at `http://localhost:5173`.
+### 3. Usage
+Open `http://localhost:5173` in your browser. 
+Click **"🎤 Start Presenter Mode"** in the top right to walk through the interactive, AI-driven disaster scenario!
 
 ---
 
-## 🎤 Presentation / Demo Mode
+## 🤝 Contribution & Roles
 
-To ensure a flawless presentation without relying on unpredictable venue Wi-Fi or uncooperative weather, ResQGrid includes a robust offline **Demo Mode**.
-
-Start the backend with the environment variable set to `true`:
-
-**Windows (PowerShell):**
-```powershell
-$env:DEMO_MODE="true"
-uvicorn backend.main:app --port 8000
-```
-**Mac/Linux:**
-```bash
-DEMO_MODE=true uvicorn backend.main:app --port 8000
-```
-
-* **What it does:** Freezes the live API fetching and unlocks the **"🌧️ Inject Rain Scenario"** and **"☀️ Clear Weather"** buttons in the UI. 
-* **The Flow:** Start with clear routes, hit "Inject Scenario" to simulate a massive 120mm rainfall spike mapped perfectly to your historical data, and watch the system instantly flag the nodes and reroute shipments natively.
-
----
-
-## 👥 Team Roles
-
-* **Sameer (Data & GIS):** OSMnx pipeline, GSI Bhukosh susceptibility model, and historical backtest validation.
-* **Pallavi (Backend & Optimizer):** FastAPI async logic, NetworkX optimizer, and the multi-shipment arbitration engine.
-* **Deep (Risk AI):** Explainable AI (XAI) risk breakdowns, API integration, and confidence scoring.
-* **Samruddhi (Frontend Dashboard):** React-Leaflet integration, arbitration visualization, and dynamic tooltips.
-* **Shubham (Dashboard Panels):** Real-time dispatcher UI controls, WebSocket telemetry, and ground reporting.
-* **Tanvi (Demo & Deck):** Strategic pitch flow, baseline metric tracking, and integration scenario design.
+This project was built for SIH 2026. The modules were distributed as follows:
+*   **Geospatial & Risk AI Lead:** Predictive modeling and GSI data integration.
+*   **Routing & Arbitration Lead:** Custom NetworkX graph generation and priority logic.
+*   **Backend Systems Architect:** FastAPI WebSockets, Database Schema, and System Integration.
+*   **Frontend & UX Lead:** Tactical dashboard, React-Leaflet mapping, and Presenter Mode sequencing.
