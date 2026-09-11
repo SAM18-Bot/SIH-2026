@@ -11,38 +11,66 @@ import json
 LAST_RAINFALL = (0.0, 0.0)
 DEMO_MODE = os.environ.get("DEMO_MODE", "false").lower() == "true"
 SCENARIO_TRIGGERED = False
+SIMULATED_RAINFALL = None  # None = use live/demo logic; float = live user slider override
+ACTIVE_PRESET = None
+
+def set_simulated_rainfall(val: float | None):
+    global SIMULATED_RAINFALL, ACTIVE_PRESET
+    SIMULATED_RAINFALL = val
+    if val is None:
+        ACTIVE_PRESET = None
+
+def get_simulated_rainfall():
+    return SIMULATED_RAINFALL
+
+def trigger_preset_scenario(preset_name: str):
+    global SCENARIO_TRIGGERED, SIMULATED_RAINFALL, ACTIVE_PRESET
+    ACTIVE_PRESET = preset_name
+    if preset_name == "monsoon_spike":
+        SCENARIO_TRIGGERED = True
+        SIMULATED_RAINFALL = 120.0
+    elif preset_name == "teesta_flood":
+        SCENARIO_TRIGGERED = True
+        SIMULATED_RAINFALL = 160.0
+    elif preset_name == "clear":
+        SCENARIO_TRIGGERED = False
+        SIMULATED_RAINFALL = 0.0
+        ACTIVE_PRESET = "clear"
 
 def trigger_demo_scenario():
-    global SCENARIO_TRIGGERED
-    SCENARIO_TRIGGERED = True
+    trigger_preset_scenario("monsoon_spike")
 
 def reset_demo_scenario():
-    global SCENARIO_TRIGGERED
-    SCENARIO_TRIGGERED = False
+    trigger_preset_scenario("clear")
+
+def get_hazard_hotspots():
+    try:
+        ls_df = pd.read_csv(CSV_PATH)
+        return ls_df[['id', 'latitude', 'longitude', 'susceptibility']].to_dict(orient='records')
+    except Exception as e:
+        print(f"Failed to load hazard points: {e}")
+        return []
 
 def get_forecast_rainfall(lat=27.174, lon=88.530):
     global LAST_RAINFALL
     
-    # 1. MANUAL OVERRIDE (Works in both live and offline modes)
-    if SCENARIO_TRIGGERED:
-        scenario_path = os.path.join(os.path.dirname(__file__), "..", "demo_data", "scenario_1.json")
-        if os.path.exists(scenario_path):
-            with open(scenario_path, "r") as f:
-                data = json.load(f)
-            rain = data.get("trigger", {}).get("rainfall_mm", 120.0)
-            # Cap the normalization roughly, but 120mm will easily hit 1.0 (max risk)
-            return rain, rain
+    if SIMULATED_RAINFALL is not None:
+        return float(SIMULATED_RAINFALL), float(SIMULATED_RAINFALL)
 
-    # 2. OFFLINE DEMO MODE (Bypasses internet completely for speed/reliability)
     if DEMO_MODE:
+        if SCENARIO_TRIGGERED:
+            scenario_path = os.path.join(os.path.dirname(__file__), "..", "demo_data", "scenario_1.json")
+            if os.path.exists(scenario_path):
+                with open(scenario_path, "r") as f:
+                    data = json.load(f)
+                rain = data.get("trigger", {}).get("rainfall_mm", 120.0)
+                return rain, rain
         return 0.0, 0.0
 
-    # 3. LIVE DATA MODE (Fetches real weather from Open-Meteo)
     url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=precipitation&hourly=precipitation"
     try:
         resp = requests.get(url, timeout=5).json()
         current = resp.get('current', {}).get('precipitation', 0.0)
-        # simplistic MVP forecasting: just grab first 3 hours average
         hourly = resp.get('hourly', {}).get('precipitation', [0, 0, 0])
         future_avg = sum(hourly[:3]) / 3.0 if len(hourly) >= 3 else current
         LAST_RAINFALL = (current, future_avg)
