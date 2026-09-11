@@ -7,7 +7,7 @@
 ![Data](https://img.shields.io/badge/Data-OSMnx%20%7C%20GSI%20Bhukosh-orange)
 
 ### 🌍 Live Deployment
-* **Frontend (Vercel):** [https://sih-2026-m4wlikp1c-sam-cd86.vercel.app](https://sih-2026-m4wlikp1c-sam-cd86.vercel.app)
+* **Frontend (Vercel):** [https://sih-2026-swart.vercel.app/](https://sih-2026-swart.vercel.app/)
 * **Backend API (Render):** [https://resqgrid-yx8y.onrender.com](https://resqgrid-yx8y.onrender.com)
 
 ResQGrid is a predictive, multi-agent logistics platform designed for the North Eastern Region (NER) and other topographically challenging areas. Standard GPS solutions are *reactive* and treat all cargo equally, leading to gridlock during crises. ResQGrid anticipates road network failures *before* they occur using geological data and live weather telemetry, autonomously rerouting fleets and arbitrating road capacity based on mission-critical priorities.
