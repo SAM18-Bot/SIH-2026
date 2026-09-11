@@ -46,7 +46,7 @@ export default function PresenterMode({ triggerDemo, triggerConflict, resetDemo,
     };
 
     return (
-        <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 w-2/3 max-w-4xl bg-black/90 text-white rounded-xl shadow-2xl z-[9999] overflow-hidden border-2 border-yellow-500">
+        <div className="absolute bottom-10 left-[420px] right-4 mx-auto w-2/3 max-w-4xl bg-black/90 text-white rounded-xl shadow-2xl z-[500] overflow-hidden border-2 border-yellow-500">
             <div className="bg-yellow-500 text-black px-4 py-2 font-bold flex justify-between items-center text-sm">
                 <span>🎤 PRESENTER MODE</span>
                 <button onClick={onClose} className="hover:text-red-800">Close ✖</button>

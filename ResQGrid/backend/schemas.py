@@ -21,6 +21,10 @@ class ShipmentResponse(ShipmentCreate):
     risk_breakdown: Optional[str] = None   # e.g. "78% Rainfall, 22% Terrain"
     confidence: Optional[str] = None       # "low" | "medium" | "high"
     arbitration_decision: Optional[str] = None
+    corridor_name: Optional[str] = "NH-10 Arterial Corridor"
+    assigned_holding_haven: Optional[str] = None
+    detour_specs_json: Optional[str] = None
+    vehicle_tonnage: Optional[float] = 5.0
 
     class Config:
         from_attributes = True

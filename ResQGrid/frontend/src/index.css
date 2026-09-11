@@ -6,4 +6,49 @@ html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
+  background-color: #020617;
+}
+
+/* Completely remove leaflet div-icon default white square borders and background */
+.leaflet-div-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.custom-vehicle-marker, .custom-conflict-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Custom sleek dark scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #020617;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-sitrep, #printable-sitrep * {
+    visibility: visible;
+  }
+  #printable-sitrep {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: white !important;
+    color: black !important;
+  }
 }

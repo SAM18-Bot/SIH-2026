@@ -33,8 +33,6 @@ export function useRouteData() {
                 if (data.event === 'shipment_updated') {
                     addLog(`Shipment #${data.shipment_id} updated: ${data.status}`, `Reason: ${data.reason}\nBreakdown: ${data.risk_breakdown || 'N/A'}`);
                     fetchShipments(); // refresh map
-                } else if (data.event === 'ai_log') {
-                    addLog(data.log.title, data.log.details);
                 }
             };
 
@@ -97,47 +95,124 @@ export function useRouteData() {
         }).catch(err => console.error("Error submitting report:", err));
     };
 
-    const [stormActive, setStormActive] = useState(false);
-
     const triggerDemo = () => {
         fetch('http://127.0.0.1:8000/api/demo/trigger', { method: 'POST' })
             .then(res => res.json())
-            .then(data => {
-                addLog("Demo Scenario Injected!", data.message);
-                setStormActive(true);
-            })
+            .then(data => addLog("Demo Scenario Injected!", data.message))
             .catch(err => console.error("Error triggering demo:", err));
     };
 
     const resetDemo = () => {
         fetch('http://127.0.0.1:8000/api/demo/reset', { method: 'POST' })
             .then(res => res.json())
-            .then(data => {
-                addLog("Weather Cleared", data.message);
-                setStormActive(false);
-            })
+            .then(data => addLog("Weather Cleared", data.message))
             .catch(err => console.error("Error resetting demo:", err));
     };
 
-    const toggleDemoMode = (isDemo) => {
-        fetch('http://127.0.0.1:8000/api/settings/mode', {
+    const [hazardPoints, setHazardPoints] = useState([]);
+    const [simulatedRain, setSimulatedRain] = useState(0);
+
+    const fetchHazardPoints = () => {
+        fetch('http://127.0.0.1:8000/api/hazard-points')
+            .then(res => res.json())
+            .then(data => setHazardPoints(data))
+            .catch(err => console.error("Error fetching hazard points:", err));
+    };
+
+    const [holdingHavens, setHoldingHavens] = useState([]);
+
+    const fetchHoldingHavens = () => {
+        fetch('http://127.0.0.1:8000/api/holding-havens')
+            .then(res => res.json())
+            .then(data => setHoldingHavens(data))
+            .catch(err => console.error("Error fetching holding havens:", err));
+    };
+
+    useEffect(() => {
+        fetchHazardPoints();
+        fetchHoldingHavens();
+    }, []);
+
+    const setRainfall = (mm) => {
+        setSimulatedRain(mm);
+        fetch('http://127.0.0.1:8000/api/simulation/rain', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ demo_mode: isDemo })
-        }).then(res => res.json()).then(data => {
-            addLog("System Configuration Changed", `Demo Mode is now ${data.demo_mode ? 'ON (Offline)' : 'OFF (Live Open-Meteo API)'}`);
-        });
+            body: JSON.stringify({ rainfall_mm: parseFloat(mm) })
+        })
+        .then(res => res.json())
+        .then(data => {
+            addLog(`Weather Simulation: ${mm} mm/hr`, `Dynamic rainfall updated across corridor graph.`);
+            fetchShipments();
+        })
+        .catch(err => console.error("Error setting rainfall:", err));
     };
 
-    const completeShipment = (id) => {
-        fetch(`http://127.0.0.1:8000/api/shipments/${id}/complete`, { method: 'POST' })
+    const triggerPreset = (presetName) => {
+        fetch('http://127.0.0.1:8000/api/simulation/preset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ preset: presetName })
+        })
+        .then(res => res.json())
+        .then(data => {
+            const rainMap = { monsoon_spike: 120, teesta_flood: 160, clear: 0 };
+            if (rainMap[presetName] !== undefined) {
+                setSimulatedRain(rainMap[presetName]);
+            }
+            addLog(`Disaster Scenario Triggered: ${presetName.toUpperCase()}`);
+            fetchShipments();
+        })
+        .catch(err => console.error("Error triggering preset:", err));
+    };
+
+    const divertBypass = (shipmentId) => {
+        fetch(`http://127.0.0.1:8000/api/shipments/${shipmentId}/divert-bypass`, {
+            method: 'POST'
+        })
+        .then(res => res.json())
+        .then(data => {
+            addLog(`🔄 Convoy #${shipmentId} Rerouted to Lava-Algarah Mountain Bypass!`, `Detour: +34 km, +72 mins, Risk reduced to 18% (Safe).`);
+            fetchShipments();
+        })
+        .catch(err => console.error("Error diverting bypass:", err));
+    };
+
+    const clearShipments = () => {
+        fetch('http://127.0.0.1:8000/api/shipments/clear', { method: 'DELETE' })
             .then(res => res.json())
             .then(() => {
-                addLog(`Shipment #${id} Arrived`, "Successfully reached destination.");
+                addLog("Cleared all active shipments.");
                 fetchShipments();
             })
-            .catch(err => console.error("Error completing shipment:", err));
+            .catch(err => console.error("Error clearing shipments:", err));
     };
 
-    return { shipments, logs, createShipment, triggerConflict, submitGroundReport, triggerDemo, resetDemo, toggleDemoMode, stormActive, completeShipment };
+    const fetchSitRep = async () => {
+        try {
+            const res = await fetch('http://127.0.0.1:8000/api/situation-report');
+            return await res.json();
+        } catch (err) {
+            console.error("Error fetching SitRep:", err);
+            return null;
+        }
+    };
+
+    return { 
+        shipments, 
+        logs, 
+        hazardPoints,
+        holdingHavens,
+        simulatedRain,
+        createShipment, 
+        triggerConflict, 
+        submitGroundReport, 
+        triggerDemo, 
+        resetDemo,
+        setRainfall,
+        triggerPreset,
+        divertBypass,
+        clearShipments,
+        fetchSitRep
+    };
 }
