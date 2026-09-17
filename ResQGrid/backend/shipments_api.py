@@ -4,6 +4,9 @@ from backend.schemas import ShipmentCreate, ShipmentResponse
 from backend.domain import Shipment
 from backend.database import get_db
 import json
+import networkx as nx
+import osmnx as ox
+from backend.optimizer import get_graph, get_route_geometry
 
 router = APIRouter()
 
@@ -50,26 +53,55 @@ def divert_to_bypass(shipment_id: int, db: Session = Depends(get_db)):
         [27.3389, 88.6065]  # Gangtok Terminal
     ]
 
+    G = get_graph()
+    lats = [wp[0] for wp in bypass_waypoints]
+    lons = [wp[1] for wp in bypass_waypoints]
+    nodes = ox.distance.nearest_nodes(G, lons, lats)
+    
+    full_path = []
+    total_length = 0.0
+    max_risk = 0.0
+    
+    for i in range(len(nodes) - 1):
+        try:
+            sub_path = nx.shortest_path(G, nodes[i], nodes[i+1], weight='length')
+            if i > 0:
+                full_path.extend(sub_path[1:])
+            else:
+                full_path.extend(sub_path)
+        except nx.NetworkXNoPath:
+            if i > 0:
+                full_path.append(nodes[i+1])
+            else:
+                full_path.extend([nodes[i], nodes[i+1]])
+
+    for i in range(len(full_path) - 1):
+        edge_data = G.get_edge_data(full_path[i], full_path[i+1])
+        if edge_data:
+            edge = next(iter(edge_data.values()))
+            total_length += float(edge.get("length", 0.0))
+            risk = float(edge.get("risk_now", 0.1))
+            if risk > max_risk:
+                max_risk = risk
+
+    distance_km = round(total_length / 1000.0, 1)
+    print(f"Bypass distance computed: {distance_km} km")
+    
+    full_geometry = get_route_geometry(G, full_path)
+
     detour_specs = {
         "corridor": "Lava-Algarah Mountain Bypass (SH-12 / NH-717A)",
-        "distance_km": 148,
-        "delta_km": "+34 km vs NH-10",
-        "eta_minutes": 275,
-        "delta_time_min": "+72 mins",
-        "estimated_fuel_burn_liters": 38.5,
-        "extra_fuel_liters": 11.8,
-        "max_risk": 0.18,
-        "safety_margin": "98% (Avoids Teesta River Submergence Zone)",
-        "recommended_by": "BRO Project Swastik & Sikkim Traffic Advisory"
+        "distance_km": distance_km,
+        "max_risk": round(max_risk, 2),
     }
 
     shipment.status = "DIVERTED_BYPASS"
     shipment.corridor_name = "Lava-Algarah Mountain Bypass"
-    shipment.current_route_json = json.dumps(bypass_waypoints)
+    shipment.current_route_json = json.dumps(full_geometry)
     shipment.detour_specs_json = json.dumps(detour_specs)
-    shipment.risk_breakdown = "18% Risk (Detour via Lava Pass avoids river gorge flood lines)"
+    shipment.risk_breakdown = f"{round(max_risk*100)}% Risk (Derived from graph)"
     shipment.confidence = "high"
-    shipment.reason = "Diverted to Lava-Algarah Bypass (+34 km, +72 mins). Clears active landslide zone."
+    shipment.reason = f"Diverted to Lava-Algarah Bypass ({distance_km} km). Clears active landslide zone."
     
     db.commit()
     db.refresh(shipment)
