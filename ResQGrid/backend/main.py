@@ -88,44 +88,49 @@ def get_terrain_profile():
         {"km": 114, "name": "Gangtok Ridge Terminal", "lat": 27.3389, "lon": 88.6065, "elevation_m": 1650, "slope_deg": 12.0, "risk": "LOW", "hazard": "High Altitude Dropzone"}
     ]
 
+from backend.optimizer import get_graph
+import osmnx as ox
+
 @app.get("/api/holding-havens", tags=["Logistics"])
 def get_holding_havens():
     """
     Returns certified mountain truck staging turnouts and holding havens.
     Used to safely stage heavy convoys during active slope destabilization.
     """
-    return [
-        {
-            "id": "haven-1",
-            "name": "Sevoke Staging Bay (Km 18)",
-            "lat": 26.8820,
-            "lon": 88.4715,
-            "capacity_total": 45,
-            "capacity_available": 28,
-            "amenities": "Emergency Fuel Reserve, Army Aid Post",
-            "status": "OPERATIONAL"
-        },
-        {
-            "id": "haven-2",
-            "name": "Melli Staging Turnout (Km 60)",
-            "lat": 27.0984,
-            "lon": 88.4590,
-            "capacity_total": 30,
-            "capacity_available": 14,
-            "amenities": "Reinforced Rockfall Shelter, Police Staging",
-            "status": "OPERATIONAL"
-        },
-        {
-            "id": "haven-3",
-            "name": "Rangpo Logistics Terminal (Km 78)",
-            "lat": 27.1764,
-            "lon": 88.5300,
-            "capacity_total": 60,
-            "capacity_available": 39,
-            "amenities": "Heavy Turnaround Bay, Satellite VHF",
-            "status": "OPERATIONAL"
-        }
+    base_havens = [
+        {"id": "haven-1", "name": "Sevoke Staging Bay (Km 18)", "lat": 26.8820, "lon": 88.4715},
+        {"id": "haven-2", "name": "Melli Staging Turnout (Km 60)", "lat": 27.0984, "lon": 88.4590},
+        {"id": "haven-3", "name": "Rangpo Logistics Terminal (Km 78)", "lat": 27.1764, "lon": 88.5300}
     ]
+    
+    G = get_graph()
+    results = []
+    
+    for h in base_havens:
+        # Snap to real graph node
+        node_id = ox.distance.nearest_nodes(G, h["lon"], h["lat"])
+        real_lon = float(G.nodes[node_id]['x'])
+        real_lat = float(G.nodes[node_id]['y'])
+        
+        # Calculate risk based on adjacent edges
+        max_risk = 0.0
+        for _, _, data in G.out_edges(node_id, data=True):
+            risk = float(data.get("risk_now", 0.0))
+            if risk > max_risk:
+                max_risk = risk
+                
+        results.append({
+            "id": h["id"],
+            "name": h["name"],
+            "lat": real_lat,
+            "lon": real_lon,
+            "current_risk": max_risk,
+            "illustrative": True,
+            "capacity_available": "Illustrative (Not from real data)",
+            "amenities": "Illustrative (Not from real data)"
+        })
+        
+    return results
 
 @app.get("/api/situation-report", tags=["Tactical"])
 def get_situation_report():
