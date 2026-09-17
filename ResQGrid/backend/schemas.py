@@ -11,6 +11,7 @@ class ShipmentCreate(BaseModel):
     priority: str
     departure_window_start: datetime
     departure_window_end: datetime
+    vehicle_tonnage: Optional[float] = 5.0
 
 class ShipmentResponse(ShipmentCreate):
     id: int
@@ -25,6 +26,9 @@ class ShipmentResponse(ShipmentCreate):
     assigned_holding_haven: Optional[str] = None
     detour_specs_json: Optional[str] = None
     vehicle_tonnage: Optional[float] = 5.0
+    distance_km: Optional[float] = None
+    eta_minutes: Optional[int] = None
+    estimated_fuel_burn_liters: Optional[float] = None
 
     class Config:
         from_attributes = True

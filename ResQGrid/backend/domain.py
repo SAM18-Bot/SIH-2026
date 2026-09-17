@@ -26,6 +26,9 @@ class Shipment(Base):
     vehicle_tonnage = Column(Float, default=5.0)
     created_at = Column(DateTime, default=datetime.utcnow)
     progress_km = Column(Float, default=0.0)
+    distance_km = Column(Float, nullable=True)
+    eta_minutes = Column(Integer, nullable=True)
+    estimated_fuel_burn_liters = Column(Float, nullable=True)
 
 class GroundReport(Base):
     __tablename__ = "ground_reports"

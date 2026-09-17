@@ -12,15 +12,37 @@ router = APIRouter()
 
 @router.post("/", response_model=ShipmentResponse)
 def create_shipment(shipment: ShipmentCreate, db: Session = Depends(get_db)):
-    # Create the shipment session in the database
-    db_shipment = Shipment(**shipment.model_dump())
+    # Calculate initial distance via shortest path
+    G = get_graph()
+    orig_node = ox.distance.nearest_nodes(G, shipment.origin_lon, shipment.origin_lat)
+    dest_node = ox.distance.nearest_nodes(G, shipment.dest_lon, shipment.dest_lat)
+    
+    try:
+        dist_m = nx.shortest_path_length(G, orig_node, dest_node, weight='length')
+        distance_km = round(dist_m / 1000.0, 1)
+    except nx.NetworkXNoPath:
+        distance_km = 0.0
+
+    # Dynamic derivations
+    # Assume base speed 35 km/h for heavy vehicles in mountains
+    eta_minutes = int((distance_km / 35.0) * 60) if distance_km else 0
+    
+    # Fuel burn logic based on tonnage and distance. 
+    # e.g., Base: 0.15 L/km for 5-ton, plus 0.02 L/km per extra ton.
+    tonnage = shipment.model_dump().get("vehicle_tonnage", 5.0)
+    fuel_rate = 0.15 + (max(0, tonnage - 5.0) * 0.02)
+    fuel_burn = round(distance_km * fuel_rate, 1)
+
+    shipment_data = shipment.model_dump()
+    db_shipment = Shipment(
+        **shipment_data,
+        distance_km=distance_km,
+        eta_minutes=eta_minutes,
+        estimated_fuel_burn_liters=fuel_burn
+    )
     db.add(db_shipment)
     db.commit()
     db.refresh(db_shipment)
-
-    # In a real app, we might trigger a synchronous routing calculation here,
-    # or let the background monitoring loop pick it up immediately.
-    # For MVP, just create as PENDING and the background loop will process it.
 
     return db_shipment
 
