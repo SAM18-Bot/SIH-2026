@@ -114,15 +114,6 @@ function getInterpolatedPosition(coords, progress) {
 
 export default function MapComponent({ shipments, hazardPoints = [], holdingHavens = [], onMapClick, simulatedRain = 0 }) {
     const [basemapKey, setBasemapKey] = useState('dark');
-    const [progress, setProgress] = useState(0);
-
-    // Continuous smooth animation loop for moving vehicles
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setProgress(prev => (prev >= 1 ? 0 : prev + 0.0035));
-        }, 50);
-        return () => clearInterval(interval);
-    }, []);
 
     return (
         <div className="flex-1 h-full relative bg-slate-950 overflow-hidden">
@@ -273,9 +264,12 @@ export default function MapComponent({ shipments, hazardPoints = [], holdingHave
                         } catch(e) {}
                     }
 
-                    // Compute current animated vehicle marker position (spaced out along route)
-                    const offsetProgress = (progress + (idx * 0.35)) % 1;
-                    const vehiclePos = getInterpolatedPosition(route, offsetProgress);
+                    // Compute current vehicle marker position based on real DB progress
+                    // We approximate the total distance to ~114km for NH-10, or use detour distance if available
+                    const totalDistance = s.detour_specs ? s.detour_specs.distance_km : 114.0;
+                    const realProgress = s.progress_km ? Math.min(1.0, s.progress_km / totalDistance) : 0.0;
+                    
+                    const vehiclePos = getInterpolatedPosition(route, realProgress);
                     const vehicleIcon = s.cargo_type === 'Medical Supplies' ? medicalIcon : (s.cargo_type === 'Construction' ? heavyIcon : cargoIcon);
 
                     return (

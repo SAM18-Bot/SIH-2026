@@ -25,6 +25,7 @@ class Shipment(Base):
     detour_specs_json = Column(Text, nullable=True)
     vehicle_tonnage = Column(Float, default=5.0)
     created_at = Column(DateTime, default=datetime.utcnow)
+    progress_km = Column(Float, default=0.0)
 
 class GroundReport(Base):
     __tablename__ = "ground_reports"

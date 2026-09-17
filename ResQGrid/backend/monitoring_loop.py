@@ -17,7 +17,10 @@ from backend.arbitration import (
 
 WAIT_THRESHOLD = 0.85
 
+last_progress_km = {}
+
 async def monitoring_loop(broadcast_callback):
+    global last_progress_km
     while True:
         await asyncio.sleep(5)
         
@@ -137,6 +140,7 @@ async def monitoring_loop(broadcast_callback):
                 opts = data["opts"]
                 old_route = shipment.current_route_json
                 old_status = shipment.status
+                old_progress = getattr(shipment, "progress_km", 0.0)
                 
                 if opts is None:
                     # It's a DIVERTED_BYPASS shipment, we already updated its reason/risk
@@ -193,7 +197,8 @@ async def monitoring_loop(broadcast_callback):
 
                 db.commit()
 
-                if old_route != shipment.current_route_json or old_status != shipment.status:
+                current_progress = getattr(shipment, "progress_km", 0.0)
+                if old_route != shipment.current_route_json or old_status != shipment.status or last_progress_km.get(shipment.id) != current_progress:
                     await broadcast_callback({
                         "event": "shipment_updated",
                         "shipment_id": shipment.id,
@@ -204,8 +209,10 @@ async def monitoring_loop(broadcast_callback):
                         "corridor_name": getattr(shipment, "corridor_name", "NH-10 Arterial Corridor"),
                         "assigned_holding_haven": getattr(shipment, "assigned_holding_haven", None),
                         "detour_specs": json.loads(shipment.detour_specs_json) if getattr(shipment, "detour_specs_json", None) else None,
-                        "geometry": json.loads(shipment.current_route_json) if shipment.current_route_json else []
+                        "geometry": json.loads(shipment.current_route_json) if shipment.current_route_json else [],
+                        "progress_km": current_progress
                     })
+                    last_progress_km[shipment.id] = current_progress
         except Exception as e:
             print(f"Monitoring loop error: {e}")
         finally:
