@@ -29,7 +29,7 @@ def compute_route_metrics(G, route, time_window="now"):
         if not edge_data:
             continue
 
-        # MultiDiGraph मध्ये पहिला available edge वापरतो
+        # Uses the first available edge in the MultiDiGraph
         edge = next(iter(edge_data.values()))
 
         risk = float(edge.get(f"risk_{time_window}", 0.1))
@@ -55,16 +55,17 @@ def compute_route_metrics(G, route, time_window="now"):
 def get_route_geometry(G, route):
     return [[float(G.nodes[n]['y']), float(G.nodes[n]['x'])] for n in route]
 
+def precompute_costs(G):
+    """Precompute routing costs for the entire graph once per cycle."""
+    for u, v, k, d in G.edges(keys=True, data=True):
+        d['cost_now'] = compute_cost(u, v, d, "now")
+        d['cost_future'] = compute_cost(u, v, d, "future")
+
 def optimize_route(orig_lat, orig_lon, dest_lat, dest_lon):
     G = get_graph()
     orig_node = ox.distance.nearest_nodes(G, orig_lon, orig_lat)
     dest_node = ox.distance.nearest_nodes(G, dest_lon, dest_lat)
     
-    # Calculate costs for NOW
-    for u, v, k, d in G.edges(keys=True, data=True):
-        d['cost_now'] = compute_cost(u, v, d, "now")
-        d['cost_future'] = compute_cost(u, v, d, "future")
-        
     try:
         route_now = nx.shortest_path(G, orig_node, dest_node, weight='cost_now')
         metrics_now = compute_route_metrics(G, route_now, "now")
