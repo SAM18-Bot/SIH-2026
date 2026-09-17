@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE } from '../config';
 
 export default function Panels({ 
     shipments, 
@@ -30,7 +31,7 @@ export default function Panels({
     }, [simulatedRain]);
 
     useEffect(() => {
-        fetch('http://127.0.0.1:8000/api/validation')
+        fetch(`${API_BASE}/api/validation`)
             .then(res => res.json())
             .then(data => setValStats(data))
             .catch(err => console.error('Failed to fetch validation stats:', err));
