@@ -1,19 +1,24 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { API_BASE } from '../config';
 
 export default function ElevationProfile({ isOpen, onClose }) {
-    if (!isOpen) return null;
+    const [points, setPoints] = useState([]);
+    const [isIllustrative, setIsIllustrative] = useState(false);
 
-    const points = [
-        { km: 0, name: "Siliguri Junction", elevation: 122, slope: "1.2°", risk: "LOW", hazard: "Valley Floor Base" },
-        { km: 18, name: "Sevoke (Coronation Br.)", elevation: 210, slope: "14.5°", risk: "HIGH", hazard: "Single-Lane Chokepoint & Rockfall" },
-        { km: 32, name: "Kalijhora Gorge", elevation: 290, slope: "18.2°", risk: "CRITICAL", hazard: "Debris Flow & River Erosion" },
-        { km: 45, name: "Teesta Bazar Confluence", elevation: 220, slope: "8.0°", risk: "CRITICAL", hazard: "Flash Flood Submergence Zone" },
-        { km: 60, name: "Melli Checkpost", elevation: 310, slope: "11.4°", risk: "MEDIUM", hazard: "Inter-State Border Staging Area" },
-        { km: 78, name: "Rangpo Border Gate", elevation: 380, slope: "7.5°", risk: "LOW", hazard: "Sikkim Entry Checkpoint" },
-        { km: 92, name: "Singtam Bridge", elevation: 410, slope: "9.2°", risk: "MEDIUM", hazard: "Silt Deposit Chokepoint" },
-        { km: 105, name: "Ranipool Hairpins", elevation: 920, slope: "22.0°", risk: "HIGH", hazard: "Severe Hairpin Incline" },
-        { km: 114, name: "Gangtok Ridge Terminal", elevation: 1650, slope: "12.0°", risk: "LOW", hazard: "High-Altitude Supply Staging" },
-    ];
+    useEffect(() => {
+        if (isOpen) {
+            fetch(`${API_BASE}/api/terrain-profile`)
+                .then(res => res.json())
+                .then(data => {
+                    setPoints(data.profile);
+                    setIsIllustrative(data.illustrative);
+                })
+                .catch(err => console.error("Error fetching terrain profile:", err));
+        }
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+    if (points.length === 0) return null;
 
     const maxElev = 1800;
     const minElev = 100;
@@ -168,7 +173,15 @@ export default function ElevationProfile({ isOpen, onClose }) {
 
                 {/* Footer */}
                 <div className="p-4 bg-slate-950 border-t border-slate-800 flex justify-between items-center text-xs text-slate-400 font-mono">
-                    <span>Source: GSI Bhukosh DEM & SRTM Elevation Inversion</span>
+                    <div className="flex items-center space-x-4">
+                        <span>Source: GSI Bhukosh DEM & SRTM Elevation Inversion</span>
+                        {isIllustrative && (
+                            <span className="bg-amber-900/50 text-amber-300 px-2 py-0.5 rounded border border-amber-500/50 flex items-center shadow-[0_0_8px_rgba(245,158,11,0.2)]">
+                                <span className="mr-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                                Illustrative Representative Data
+                            </span>
+                        )}
+                    </div>
                     <button 
                         onClick={onClose}
                         className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-1.5 px-4 rounded transition"

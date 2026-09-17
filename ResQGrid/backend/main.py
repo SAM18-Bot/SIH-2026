@@ -75,18 +75,22 @@ def get_terrain_profile():
     """
     Returns realistic elevation profile along the primary Siliguri-Gangtok corridor (NH-10).
     Includes altitude (m), distance (km), slope percentage, and geomorphic risk classification.
+    Note: Values are representative/illustrative, not measured, until real SRTM data is integrated.
     """
-    return [
-        {"km": 0, "name": "Siliguri Junction", "lat": 26.7271, "lon": 88.4230, "elevation_m": 122, "slope_deg": 1.2, "risk": "LOW"},
-        {"km": 18, "name": "Sevoke (Coronation Bridge)", "lat": 26.8820, "lon": 88.4715, "elevation_m": 210, "slope_deg": 14.5, "risk": "HIGH", "hazard": "Single-Lane Chokepoint & Rockfall"},
-        {"km": 32, "name": "Kalijhora Gorge", "lat": 26.9324, "lon": 88.4552, "elevation_m": 290, "slope_deg": 18.2, "risk": "CRITICAL", "hazard": "Debris Flow & River Erosion"},
-        {"km": 45, "name": "Teesta Bazar Confluence", "lat": 27.0588, "lon": 88.4310, "elevation_m": 220, "slope_deg": 8.0, "risk": "CRITICAL", "hazard": "Flash Flood Submergence Zone"},
-        {"km": 60, "name": "Melli Checkpost", "lat": 27.0984, "lon": 88.4590, "elevation_m": 310, "slope_deg": 11.4, "risk": "MEDIUM", "hazard": "Inter-State Border Control Staging"},
-        {"km": 78, "name": "Rangpo Border Gate", "lat": 27.1764, "lon": 88.5300, "elevation_m": 380, "slope_deg": 7.5, "risk": "LOW"},
-        {"km": 92, "name": "Singtam Bridge", "lat": 27.2340, "lon": 88.4980, "elevation_m": 410, "slope_deg": 9.2, "risk": "MEDIUM", "hazard": "Silt Deposit Choke"},
-        {"km": 105, "name": "Ranipool Hairpin Bend", "lat": 27.2910, "lon": 88.5860, "elevation_m": 920, "slope_deg": 22.0, "risk": "HIGH", "hazard": "Steep Valley Hairpins"},
-        {"km": 114, "name": "Gangtok Ridge Terminal", "lat": 27.3389, "lon": 88.6065, "elevation_m": 1650, "slope_deg": 12.0, "risk": "LOW", "hazard": "High Altitude Dropzone"}
-    ]
+    return {
+        "illustrative": True,
+        "profile": [
+            {"km": 0, "name": "Siliguri Junction", "lat": 26.7271, "lon": 88.4230, "elevation": 122, "slope_deg": 1.2, "risk": "LOW"},
+            {"km": 18, "name": "Sevoke (Coronation Bridge)", "lat": 26.8820, "lon": 88.4715, "elevation": 210, "slope_deg": 14.5, "risk": "HIGH", "hazard": "Single-Lane Chokepoint & Rockfall"},
+            {"km": 32, "name": "Kalijhora Gorge", "lat": 26.9324, "lon": 88.4552, "elevation": 290, "slope_deg": 18.2, "risk": "CRITICAL", "hazard": "Debris Flow & River Erosion"},
+            {"km": 45, "name": "Teesta Bazar Confluence", "lat": 27.0588, "lon": 88.4310, "elevation": 220, "slope_deg": 8.0, "risk": "CRITICAL", "hazard": "Flash Flood Submergence Zone"},
+            {"km": 60, "name": "Melli Checkpost", "lat": 27.0984, "lon": 88.4590, "elevation": 310, "slope_deg": 11.4, "risk": "MEDIUM", "hazard": "Inter-State Border Control Staging"},
+            {"km": 78, "name": "Rangpo Border Gate", "lat": 27.1764, "lon": 88.5300, "elevation": 380, "slope_deg": 7.5, "risk": "LOW"},
+            {"km": 92, "name": "Singtam Bridge", "lat": 27.2340, "lon": 88.4980, "elevation": 410, "slope_deg": 9.2, "risk": "MEDIUM", "hazard": "Silt Deposit Choke"},
+            {"km": 105, "name": "Ranipool Hairpin Bend", "lat": 27.2910, "lon": 88.5860, "elevation": 920, "slope_deg": 22.0, "risk": "HIGH", "hazard": "Steep Valley Hairpins"},
+            {"km": 114, "name": "Gangtok Ridge Terminal", "lat": 27.3389, "lon": 88.6065, "elevation": 1650, "slope_deg": 12.0, "risk": "LOW", "hazard": "High Altitude Dropzone"}
+        ]
+    }
 
 from backend.optimizer import get_graph
 import osmnx as ox
