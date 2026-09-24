@@ -79,6 +79,31 @@ def get_forecast_rainfall(lat=27.174, lon=88.530):
         print(f"[WARNING] Failed to fetch forecast rainfall: {e}. Using cached fallback {LAST_RAINFALL}.")
         return LAST_RAINFALL
 
+def get_safe_departure_time(lat=27.174, lon=88.530, threshold_mm=15.0):
+    """
+    Pulls the 12h Open-Meteo forecast and finds the earliest safe departure hour
+    where precipitation is below the safety threshold.
+    """
+    from datetime import datetime
+    import dateutil.parser
+    
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&hourly=precipitation&forecast_days=2"
+    try:
+        resp = requests.get(url, timeout=5).json()
+        times = resp.get('hourly', {}).get('time', [])
+        precips = resp.get('hourly', {}).get('precipitation', [])
+        
+        now = datetime.utcnow()
+        for t_str, precip in zip(times, precips):
+            dt = dateutil.parser.isoparse(t_str)
+            # Only consider future hours
+            if dt > now and precip < threshold_mm:
+                return dt
+                
+    except Exception as e:
+        print(f"[WARNING] Failed to fetch safe departure time: {e}")
+    return None
+
 WEIGHT_SUSCEPTIBILITY = 0.6
 WEIGHT_RAINFALL = 0.4
 

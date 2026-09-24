@@ -234,6 +234,12 @@ export default function Panels({
                                     </div>
                                 )}
 
+                                {s.recommended_departure_time && s.status.includes('DELAYED') && (
+                                    <div className="text-[11px] p-1.5 bg-cyan-950/40 border border-cyan-600/30 rounded text-cyan-200 mt-1 mb-1">
+                                        ⏱️ Safe Departure Window: <strong>{new Date(s.recommended_departure_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</strong>
+                                    </div>
+                                )}
+
                                 {s.risk_breakdown && (
                                     <div className="text-[11px] text-slate-400">
                                         <span className="text-slate-500">XAI Risk Split:</span> {s.risk_breakdown}

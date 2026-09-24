@@ -186,6 +186,9 @@ async def monitoring_loop(broadcast_callback):
                         haven = "Sevoke Staging Camp (Km 18)"
                         shipment.assigned_holding_haven = haven
                         shipment.reason = f"High risk now ({opts['now']['max_risk']:.2f}). Staged at {haven}; wait for safe window."
+                        if old_status != "DELAYED":
+                            from backend.risk_model import get_safe_departure_time
+                            shipment.recommended_departure_time = get_safe_departure_time()
                     else:
                         shipment.status = "DELAYED"
                         shipment.current_route_json = json.dumps([])
@@ -194,6 +197,9 @@ async def monitoring_loop(broadcast_callback):
                         haven = "Melli Staging Turnout (Km 60)"
                         shipment.assigned_holding_haven = haven
                         shipment.reason = f"Main NH-10 Corridor Unsafe. Hold at {haven} or divert via Lava Bypass."
+                        if old_status != "DELAYED":
+                            from backend.risk_model import get_safe_departure_time
+                            shipment.recommended_departure_time = get_safe_departure_time()
 
                 db.commit()
 
@@ -210,7 +216,8 @@ async def monitoring_loop(broadcast_callback):
                         "assigned_holding_haven": getattr(shipment, "assigned_holding_haven", None),
                         "detour_specs": json.loads(shipment.detour_specs_json) if getattr(shipment, "detour_specs_json", None) else None,
                         "geometry": json.loads(shipment.current_route_json) if shipment.current_route_json else [],
-                        "progress_km": current_progress
+                        "progress_km": current_progress,
+                        "recommended_departure_time": shipment.recommended_departure_time.isoformat() if getattr(shipment, "recommended_departure_time", None) else None
                     })
                     last_progress_km[shipment.id] = current_progress
         except Exception as e:
