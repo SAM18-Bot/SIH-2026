@@ -44,25 +44,33 @@ def root():
 @app.post("/api/simulation/rain", tags=["Simulation"])
 def simulate_rain(req: RainSimulationRequest):
     from backend.risk_model import set_simulated_rainfall
+    from backend.monitoring_loop import trigger_recalculation
     set_simulated_rainfall(req.rainfall_mm)
+    trigger_recalculation()
     return {"status": "success", "simulated_rainfall": req.rainfall_mm}
 
 @app.post("/api/simulation/preset", tags=["Simulation"])
 def trigger_preset(req: PresetRequest):
     from backend.risk_model import trigger_preset_scenario
+    from backend.monitoring_loop import trigger_recalculation
     trigger_preset_scenario(req.preset)
+    trigger_recalculation()
     return {"status": "success", "preset": req.preset}
 
 @app.post("/api/demo/trigger", tags=["Demo"])
 def trigger_demo():
     from backend.risk_model import trigger_demo_scenario
+    from backend.monitoring_loop import trigger_recalculation
     trigger_demo_scenario()
+    trigger_recalculation()
     return {"status": "triggered", "message": "Rainfall scenario injected!"}
 
 @app.post("/api/demo/reset", tags=["Demo"])
 def reset_demo():
     from backend.risk_model import reset_demo_scenario
+    from backend.monitoring_loop import trigger_recalculation
     reset_demo_scenario()
+    trigger_recalculation()
     return {"status": "reset", "message": "Weather cleared."}
 
 @app.get("/api/hazard-points", tags=["GIS"])

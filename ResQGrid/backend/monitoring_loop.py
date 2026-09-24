@@ -18,11 +18,19 @@ from backend.arbitration import (
 WAIT_THRESHOLD = 0.85
 
 last_progress_km = {}
+_recalc_event = asyncio.Event()
+
+def trigger_recalculation():
+    _recalc_event.set()
 
 async def monitoring_loop(broadcast_callback):
     global last_progress_km
     while True:
-        await asyncio.sleep(5)
+        try:
+            await asyncio.wait_for(_recalc_event.wait(), timeout=5.0)
+            _recalc_event.clear()
+        except asyncio.TimeoutError:
+            pass
         
         db = SessionLocal()
         try:
