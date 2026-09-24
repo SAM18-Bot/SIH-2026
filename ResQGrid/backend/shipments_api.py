@@ -144,6 +144,50 @@ def assign_holding_haven(shipment_id: int, haven_name: str = "Melli Staging Turn
     db.refresh(shipment)
     return shipment
 
+@router.get("/{shipment_id}/advisory")
+def get_dispatch_advisory(shipment_id: int, db: Session = Depends(get_db)):
+    """
+    Generates a formatted official dispatch advisory printout for field teams.
+    """
+    shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
+    if not shipment:
+        raise HTTPException(status_code=404, detail="Shipment not found")
+
+    status = shipment.status
+    corridor = shipment.corridor_name or "NH-10 Arterial Corridor"
+    
+    advisory = [
+        "========================================",
+        f"       RESQGRID DISPATCH ADVISORY       ",
+        "========================================",
+        f"CONVOY ID      : #{shipment.id}",
+        f"CARGO TYPE     : {shipment.cargo_type.upper()}",
+        f"PRIORITY CLS   : {shipment.priority.upper()}",
+        f"STATUS         : {status.upper()}",
+        "----------------------------------------",
+        f"ASSIGNED ROUTE : {corridor}",
+        f"DISTANCE       : {shipment.distance_km or 0} km",
+        f"EST. TRANSIT   : {shipment.eta_minutes or 0} minutes",
+        f"EST. FUEL BURN : {shipment.estimated_fuel_burn_liters or 0} Liters",
+        "----------------------------------------",
+        f"CURRENT RISK   : {shipment.risk_breakdown or 'Pending Scan'}",
+        f"CONFIDENCE     : {(shipment.confidence or 'Unknown').upper()}"
+    ]
+
+    if shipment.assigned_holding_haven:
+        advisory.append(f"STAGING ORDER  : HOLD AT {shipment.assigned_holding_haven.upper()}")
+    
+    if shipment.recommended_departure_time:
+        advisory.append(f"SAFE DEPARTURE : {shipment.recommended_departure_time.strftime('%Y-%m-%d %H:00 UTC')}")
+        
+    if shipment.reason:
+        advisory.append("----------------------------------------")
+        advisory.append(f"TACTICAL NOTE  : {shipment.reason}")
+
+    advisory.append("========================================")
+    
+    return {"advisory_text": "\n".join(advisory)}
+
 @router.delete("/clear")
 def clear_all_shipments(db: Session = Depends(get_db)):
     db.query(Shipment).delete()

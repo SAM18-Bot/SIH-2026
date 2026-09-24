@@ -6,6 +6,7 @@ import SitRepModal from './components/SitRepModal';
 import ElevationProfile from './components/ElevationProfile';
 import ArbitrationModal from './components/ArbitrationModal';
 import PresenterMode from './components/PresenterMode';
+import AdvisoryModal from './components/AdvisoryModal';
 
 export default function App() {
     const { 
@@ -37,6 +38,7 @@ export default function App() {
     const [sitRepData, setSitRepData] = useState(null);
     const [isElevationOpen, setIsElevationOpen] = useState(false);
     const [arbitrationShipment, setArbitrationShipment] = useState(null);
+    const [advisoryShipmentId, setAdvisoryShipmentId] = useState(null);
 
     const handleOpenSitRep = async () => {
         const data = await fetchSitRep();
@@ -68,6 +70,7 @@ export default function App() {
                 onOpenSitRep={handleOpenSitRep}
                 onOpenElevation={() => setIsElevationOpen(true)}
                 onOpenArbitration={(s) => setArbitrationShipment(s)}
+                onOpenAdvisory={(id) => setAdvisoryShipmentId(id)}
                 reportLat={reportLat}
                 setReportLat={setReportLat}
                 reportLon={reportLon}
@@ -102,6 +105,13 @@ export default function App() {
                 onClose={() => setArbitrationShipment(null)} 
                 shipment={arbitrationShipment}
                 allShipments={shipments}
+            />
+
+            {/* Dispatch Advisory Format Modal */}
+            <AdvisoryModal
+                isOpen={!!advisoryShipmentId}
+                onClose={() => setAdvisoryShipmentId(null)}
+                shipmentId={advisoryShipmentId}
             />
 
             {/* Presenter Mode Toggle Button (offset below the map's basemap switcher so it doesn't overlap) */}

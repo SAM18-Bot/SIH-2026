@@ -15,6 +15,7 @@ export default function Panels({
     onOpenSitRep,
     onOpenElevation,
     onOpenArbitration,
+    onOpenAdvisory,
     reportLat,
     setReportLat,
     reportLon,
@@ -285,6 +286,17 @@ export default function Panels({
                                         </button>
                                     </div>
                                 )}
+
+                                {/* Print Dispatch Advisory */}
+                                <div className="pt-1.5 border-t border-slate-800/80">
+                                    <button
+                                        onClick={() => onOpenAdvisory(s.id)}
+                                        className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-1 px-2 rounded text-[11px] transition flex items-center justify-center space-x-1"
+                                    >
+                                        <span>🖨️</span>
+                                        <span>Print Dispatch Advisory</span>
+                                    </button>
+                                </div>
                             </div>
                         );
                     })}
