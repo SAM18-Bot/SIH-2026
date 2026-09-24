@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE } from '../hooks/useRouteData';
+import { API_BASE } from '../config';
 
 export default function AdvisoryModal({ isOpen, onClose, shipmentId }) {
     const [advisoryText, setAdvisoryText] = useState('Loading advisory...');
